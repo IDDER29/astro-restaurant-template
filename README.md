@@ -2,7 +2,7 @@
 
 Marmara is a late-night restaurant in Ben Guerir, Morocco, two minutes from the UM6P campus. It serves tacos, burgers, sandwiches, pizza, breakfast and cold-pressed juice — open every day until 1 AM.
 
-This repository is the **Astro static-site rebuild** of the Marmara web presence. It replaces the single-file bundle (`Marmara Restaurant Website.html`) for ongoing maintenance and deployment.
+This repository is the **Astro static-site rebuild** of the Marmara web presence. It reproduces the original single-file design (`Marmara Restaurant Website.html`) exactly, in a clean multi-page Astro project that is easy to deploy and maintain.
 
 ---
 
@@ -11,7 +11,9 @@ This repository is the **Astro static-site rebuild** of the Marmara web presence
 | Layer | Tool |
 |---|---|
 | Framework | [Astro](https://astro.build) v4 (static output, no JS framework) |
-| Styling | Plain CSS with CSS custom properties (design tokens) |
+| Markup | The original design's exact rendered markup (inline styles), captured per page |
+| Fonts | Hanken Grotesk (body) + Bricolage Grotesque (headings), via Google Fonts |
+| Interactivity | Small vanilla-JS islands (no framework) |
 | Unit tests | [Vitest](https://vitest.dev) v2 |
 | Deploy | Netlify or Cloudflare Pages (static, no server) |
 
@@ -24,8 +26,12 @@ npm install       # install dependencies
 npm run dev       # dev server at http://localhost:4321
 npm run build     # production build → dist/
 npm run preview   # preview the dist/ build locally
-npm test          # run unit tests (10 tests, ~300 ms)
+npm test          # run unit tests
 ```
+
+> Interactivity (cart, tabs, forms, dashboard) loads bundled JS via absolute
+> `/_astro/` paths, so test it over HTTP (`npm run dev` / `npm run preview`),
+> **not** by opening `dist/*.html` from `file://`.
 
 ---
 
@@ -33,85 +39,89 @@ npm test          # run unit tests (10 tests, ~300 ms)
 
 ```
 src/
-  pages/          # One .astro file per route
-    index.astro       → /
+  pages/          # One .astro file per route — each renders its captured markup
+    index.astro       → /          (home)
     menu.astro        → /menu
     catering.astro    → /catering
     about.astro       → /about
     visit.astro       → /visit
-    dashboard.astro   → /dashboard
-  components/     # Reusable Astro components (Nav, Footer, MenuCard, …)
-  layouts/        # BaseLayout.astro — shared <head>, SEO, nav/footer shell
-  data/           # Static JSON data loaded at build time
+    dashboard.astro   → /dashboard (owner panel)
+  layouts/
+    BaseLayout.astro  # shared <head>: SEO/OG, Google Fonts, favicon, animations
+  raw/            # exact rendered markup captured from the original design
+    home.html  menu.html  catering.html  about.html  visit.html  admin.html
+    dashboard-full.html   # assembled owner panel (all 8 sidebar sections)
+    dash/                 # the 8 captured dashboard sections (source for the above)
+  scripts/        # vanilla-JS interactivity islands
+    whatsapp.js       — wa.me URL builders (buildOrderUrl, buildContactUrl) + tests
+    menu-cart.js      — “+” cart bar + category-tab filtering (home + menu)
+    catering-quote.js — catering form → pre-filled WhatsApp message
+    dash.js           — dashboard sidebar section switching + local field persistence
+  data/
     site.json         — contact details, hours, hero copy (swap before go-live)
-    menu.json         — 34 menu items across 9 categories
-    catering.json     — catering packages and pricing
-  scripts/        # Client-side JS modules (cart, whatsapp, cms)
-    whatsapp.js       — URL builders for WhatsApp ordering
-    cart.js           — pure cart math (no storage)
-    cms.js            — localStorage owner dashboard helpers
-    *-island.js       — client-side interactivity attached per page
+    menu.json         — 34 menu items across 9 categories (drives cart lookups) + test
+  styles/
+    anim.css          — keyframes used by the captured markup (mar-*, sc-shine)
 public/
-  images/         — holds only CREDITS.md; photo placeholders are CSS gradients rendered by MenuCard.astro until items get an `image` field
-  og-image.svg    — Open Graph image
+  images/CREDITS.md   — photos are CSS-gradient placeholders in the markup; see this file
+  favicon.svg  og-image.svg
+Marmara Restaurant Website.html  — original bundle: design + content reference (see below)
 ```
+
+### Why captured markup?
+
+The original was a self-contained bundle whose pages were rendered by an in-browser
+React runtime. To reproduce the design **exactly**, each page was rendered headlessly
+and its real HTML/CSS captured into `src/raw/*.html`, then wrapped in `BaseLayout` and
+re-animated with the JS islands. Page-by-page parity was verified with Playwright
+screenshots against the original (matching pixel heights).
 
 ---
 
 ## How ordering works
 
-Customers browse the menu, add items to a cart, and tap "Send order on WhatsApp". This opens a pre-filled WhatsApp message to the restaurant's number. No payment gateway or backend is needed — orders land in WhatsApp as they already do today.
-
-Catering quote requests work the same way: fill the form and tap "Send my request on WhatsApp".
+Customers browse the menu, tap `+` to build a cart, and tap “Send order on WhatsApp” —
+this opens a pre-filled WhatsApp message to the restaurant. Catering quotes work the
+same way (fill the form → “Send my request on WhatsApp”). No payment gateway or backend
+is needed; orders land in WhatsApp as they already do today.
 
 ---
 
 ## Demo note
 
-The owner dashboard (`/dashboard`) lets the restaurant owner edit the homepage headline, about story, promo banner and store-open status. **These changes are persisted to `localStorage` on the editing device only.** They do not propagate to other devices or to visitors — the page still serves the JSON baked into the static build for everyone else.
+The owner dashboard (`/dashboard`) reproduces the original panel exactly: all eight
+sidebar sections (Dashboard, Orders, Menu, Catering, Website content, Hours, Business
+info, QR codes) switch on click, and every field remembers what you type. **Edits are
+persisted to `localStorage` on the editing device only** — they do not propagate to
+customers or other devices, and they do not rewrite the public pages (which are static).
 
-Phase 2 (not in scope here) would replace this with a real CMS backend — for example Supabase — so that a single owner edit updates the live site for all visitors.
+Phase 2 (not in scope here) would add a real backend (e.g. Supabase) so a single owner
+edit updates the live site for everyone.
 
 ---
 
 ## Go-live checklist
 
-Before publishing the site, swap every placeholder in `src/data/site.json`:
-
-- [ ] `whatsapp`: replace `212600000000` with the real WhatsApp number (digits only, with country code)
-- [ ] `phoneDisplay`: replace `+212 6 00 00 00 00` with the formatted display number
-- [ ] `instagram`: replace `marmara.fruits` with the real Instagram handle
-- [ ] `address`: replace `123 Avenue Hassan II, Ben Guerir 43150, Morocco` with the real street address
-- [ ] `mapsQuery`: update to a query that finds the exact location on Google Maps
-- [ ] `hours.open` / `hours.close`: confirm actual opening/closing times
-- [ ] Add real food photos — see `public/images/CREDITS.md` for slot names and sizes; current gradients are placeholders
-- [ ] Replace `public/og-image.svg` with a 1200×630 PNG/JPG at `public/og-image.png` and update the `ogImage` default in `BaseLayout.astro` so social link previews render correctly (the current SVG is not reliably supported by all crawlers)
-- [ ] Set up a Google Business Profile so the restaurant appears in local search
-- [ ] Run `npm run build` after every data change and verify the output in `dist/`
-- [ ] Deploy (see below)
+- [ ] `src/data/site.json` → `whatsapp`: replace `212600000000` with the real number (digits + country code). This number also drives every `wa.me` / `tel:` link baked into the captured markup — search `src/raw/` and update those too.
+- [ ] `instagram`: replace `marmara.fruits` with the real handle (also in `src/raw/`).
+- [ ] Confirm the address `123 Avenue Hassan II, Ben Guerir 43150` and the Google Maps query in the markup point to the real location.
+- [ ] Add real food photos: the cards use CSS-gradient placeholders (`image-slot` elements). See `public/images/CREDITS.md`.
+- [ ] Replace `public/og-image.svg` with a 1200×630 PNG/JPG and update `ogImage` in `BaseLayout.astro` (SVG OG images aren’t reliably supported by social crawlers).
+- [ ] Set up a Google Business Profile so the restaurant appears in local search/Maps.
+- [ ] `npm run build`, verify in `dist/` over HTTP, then deploy.
 
 ---
 
 ## Deploying
 
-### Netlify
-
-Connect the repository to Netlify. It will use the settings in `netlify.toml` automatically:
-
-- Build command: `npm run build`
-- Publish directory: `dist`
-
-### Cloudflare Pages
-
-Create a new Pages project, point it at this repository, and set:
-
-- Build command: `npm run build`
-- Output directory: `dist`
-
-No environment variables are required — the build is fully static.
+**Netlify** — connect the repo; `netlify.toml` sets build `npm run build`, publish `dist`.
+**Cloudflare Pages** — new Pages project → build `npm run build`, output `dist`.
+No environment variables; the build is fully static.
 
 ---
 
 ## Reference file
 
-`Marmara Restaurant Website.html` in the repository root is the original single-file bundle. It is kept as a **design and content reference only** — it is not the active site. Do not edit it; use the Astro source under `src/` for all ongoing changes.
+`Marmara Restaurant Website.html` is the original single-file bundle. It is both the
+**design source** (the `src/raw/*.html` markup was captured from it) and a content
+reference. It is not the active site — make ongoing changes under `src/`.
