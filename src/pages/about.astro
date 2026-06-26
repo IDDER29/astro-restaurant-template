@@ -1,19 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionHeader from '../components/SectionHeader.astro';
-import StatRow from '../components/StatRow.astro';
-import site from '../data/site.json';
+import body from '../raw/about.html?raw';
 ---
 <BaseLayout title="About — Marmara, Ben Guerir" description="Good food, any hour. The story behind Marmara in Ben Guerir.">
-  <section class="container" style="padding:40px 20px">
-    <SectionHeader eyebrow="Our story" title="Good food, any hour." />
-    <p style="max-width:680px;font-size:18px;color:#5b544d">{site.about.story}</p>
-    <h2 style="margin-top:40px">{site.about.beliefHeading}</h2>
-    <p style="max-width:680px;color:#5b544d;margin-top:10px">{site.about.beliefBody}</p>
-    <StatRow />
-    <div class="cta" style="display:flex;gap:12px;margin-top:10px">
-      <a class="btn btn-primary" href="/menu">See the menu</a>
-      <a class="btn btn-ghost" href={`https://wa.me/${site.whatsapp}`}>Order now</a>
-    </div>
-  </section>
+  <Fragment set:html={body} />
 </BaseLayout>

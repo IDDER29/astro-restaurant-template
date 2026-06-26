@@ -1,7 +1,5 @@
 ---
-import '../styles/global.css';
-import Nav from '../components/Nav.astro';
-import Footer from '../components/Footer.astro';
+import '../styles/anim.css';
 const { title, description, ogImage = '/og-image.svg' } = Astro.props;
 ---
 <!doctype html>
@@ -19,11 +17,17 @@ const { title, description, ogImage = '/og-image.svg' } = Astro.props;
   <link rel="icon" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@300..800&display=swap"
+    rel="stylesheet"
+  />
+  <style is:global>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; }
+    *, *::before, *::after { box-sizing: border-box; }
+  </style>
 </head>
 <body>
-  <Nav />
-  <main><slot /></main>
-  <Footer />
+  <slot />
 </body>
 </html>

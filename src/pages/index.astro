@@ -1,49 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionHeader from '../components/SectionHeader.astro';
-import StatRow from '../components/StatRow.astro';
-import QrBlock from '../components/QrBlock.astro';
-import MenuCard from '../components/MenuCard.astro';
-import CartDrawer from '../components/CartDrawer.astro';
-import site from '../data/site.json';
-import menu from '../data/menu.json';
-const popular = menu.filter((m) => m.popular).slice(0, 6);
-const wa = `https://wa.me/${site.whatsapp}`;
-const maps = `https://maps.google.com/?q=${encodeURIComponent(site.mapsQuery)}`;
+import body from '../raw/home.html?raw';
 ---
-<BaseLayout title="Marmara — Tacos, burgers & fresh juice in Ben Guerir" description="Late-night food in Ben Guerir, 2 minutes from UM6P. Sandwiches, Moroccan tacos, burgers, pizza & fresh juice. Dine in, takeaway or delivery — open till 1 AM.">
-  <section class="hero container">
-    <span class="badge">{site.hero.badge}</span>
-    <h1>{site.hero.headline}</h1>
-    <p class="sub">{site.hero.sub}</p>
-    <div class="cta"><a class="btn btn-primary" href="/menu">See the menu</a><a class="btn btn-ghost" href={wa}>Order now</a></div>
-    <StatRow />
-  </section>
-
-  <section class="container">
-    <SectionHeader eyebrow="Skip the line" title="Order ahead, walk past the queue" sub="Send your picks on WhatsApp. We cook fresh, timed to your arrival. No app to download." />
-  </section>
-
-  <section class="container">
-    <SectionHeader eyebrow="Popular" title="What people are ordering" />
-    <div class="grid">{popular.map((item) => <MenuCard item={item} />)}</div>
-  </section>
-
-  <section class="container loc">
-    <div>
-      <SectionHeader eyebrow="Open until 1 AM" title="Open when everything else is closed" sub={`${site.address}. Cash & card on pickup.`} />
-      <div class="cta"><a class="btn btn-primary" href={maps}>Open in Google Maps</a><a class="btn btn-ghost" href={wa}>Call / WhatsApp</a></div>
-    </div>
-  </section>
-
-  <QrBlock />
-  <CartDrawer />
-  <script>import '../scripts/menu-island.js';</script>
+<BaseLayout
+  title="Marmara — Tacos, burgers & fresh juice in Ben Guerir"
+  description="Late-night food in Ben Guerir, 2 minutes from UM6P. Sandwiches, Moroccan tacos, burgers, pizza & fresh juice. Dine in, takeaway or delivery — open till 1 AM."
+>
+  <Fragment set:html={body} />
 </BaseLayout>
-<style>
-  .hero{padding:50px 20px 10px}.badge{display:inline-block;background:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px}
-  .hero h1{font-size:clamp(36px,7vw,64px);margin:14px 0}.sub{max-width:620px;color:#5b544d;font-size:18px}
-  .cta{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}
-  .loc{margin-top:40px}
-</style>
