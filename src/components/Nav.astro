@@ -1,0 +1,21 @@
+---
+import site from '../data/site.json';
+const links = [
+  { href: '/', label: 'Home' }, { href: '/menu', label: 'Menu' },
+  { href: '/catering', label: 'Catering' }, { href: '/about', label: 'About' },
+  { href: '/visit', label: 'Visit' },
+];
+const wa = `https://wa.me/${site.whatsapp}`;
+---
+<header class="nav"><div class="container nav-in">
+  <a href="/" class="brand">Marmara</a>
+  <nav>{links.map((l) => <a href={l.href}>{l.label}</a>)}</nav>
+  <a class="btn btn-primary" href={wa}>Order on WhatsApp</a>
+</div></header>
+<style>
+  .nav{position:sticky;top:0;z-index:50;background:rgba(255,251,244,.9);backdrop-filter:blur(8px);border-bottom:1px solid rgba(24,20,16,.06)}
+  .nav-in{display:flex;align-items:center;gap:20px;height:64px}
+  .brand{font-family:var(--font-head);font-weight:800;font-size:22px}
+  nav{display:flex;gap:18px;margin-left:auto}
+  @media(max-width:720px){nav{display:none}}
+</style>

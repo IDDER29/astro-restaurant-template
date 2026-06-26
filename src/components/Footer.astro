@@ -1,0 +1,27 @@
+---
+import site from '../data/site.json';
+---
+<footer class="ft"><div class="container ft-in">
+  <div>
+    <div class="brand">Marmara</div>
+    <p>Sandwiches, tacos, burgers, pizza & fresh juice in Ben Guerir. Dine in, takeaway or delivery — open till 1 AM.</p>
+  </div>
+  <div>
+    <strong>Pages</strong>
+    <a href="/menu">Menu</a><a href="/catering">Catering</a><a href="/about">About</a><a href="/visit">Visit</a>
+  </div>
+  <div>
+    <strong>Find us</strong>
+    <a href={`https://wa.me/${site.whatsapp}`}>WhatsApp</a>
+    <a href={`https://instagram.com/${site.instagram}`}>Instagram</a>
+    <a href={`https://maps.google.com/?q=${encodeURIComponent(site.mapsQuery)}`}>Google Maps</a>
+    <p>{site.address} · {site.hours.open}–{site.hours.close} daily</p>
+    <a href="/dashboard">Owner login</a>
+  </div>
+</div></footer>
+<style>
+  .ft{background:var(--ink);color:#fff;margin-top:60px}
+  .ft-in{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px;padding:40px 20px}
+  .ft a{display:block;opacity:.8;margin-top:6px}
+  @media(max-width:720px){.ft-in{grid-template-columns:1fr}}
+</style>
