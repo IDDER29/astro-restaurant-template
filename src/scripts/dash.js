@@ -1,5 +1,7 @@
 // Owner dashboard interactivity (demo): sidebar switching, toggles, order pills,
 // live preview, and button feedback. All state persisted to localStorage.
+import { buildStagesObject } from './order-stages.js';
+import { generateQrSvg, generateQrPng } from './qr-encode.js';
 
 const SECTIONS = ['dashboard','orders','menu','catering','website-content','hours','business-info','qr-codes'];
 const LABELS = {
@@ -8,12 +10,15 @@ const LABELS = {
 };
 
 const STATUS_CYCLE  = ['New', 'Preparing', 'Ready', 'Picked up'];
-const STATUS_COLORS = {
-  'New':        { bg: 'rgb(255, 231, 226)', color: 'rgb(210, 69, 30)' },
-  'Preparing':  { bg: 'rgb(255, 241, 214)', color: 'rgb(154, 106, 18)' },
-  'Ready':      { bg: 'rgb(226, 242, 230)', color: 'rgb(46, 125, 70)' },
-  'Picked up':  { bg: 'rgb(236, 233, 226)', color: 'rgb(122, 113, 101)' },
-};
+// Index-based color lookup (used by applyPillStatus and wireOrderStages so colors stay
+// correct even after stages are renamed).
+const STAGE_INDEX_COLORS = [
+  { bg: 'rgb(255, 231, 226)', color: 'rgb(210, 69, 30)' },
+  { bg: 'rgb(255, 241, 214)', color: 'rgb(154, 106, 18)' },
+  { bg: 'rgb(226, 242, 230)', color: 'rgb(46, 125, 70)' },
+  { bg: 'rgb(236, 233, 226)', color: 'rgb(122, 113, 101)' },
+];
+const _DEFAULT_STAGES = ['New', 'Preparing', 'Ready', 'Picked up'];
 const TOGGLE_ON_BG  = 'rgb(46, 158, 91)';
 const TOGGLE_OFF_BG = 'rgb(203, 213, 225)';
 
@@ -75,8 +80,10 @@ function show(slug, P, rows) {
 function persist(root) {
   const fields = root.querySelectorAll('input, textarea, select');
   fields.forEach((el, i) => {
-    if (el.closest('[data-dash-section="menu"]')) return;     // menu manages its own fields
-    if (el.closest('[data-dash-section="catering"]')) return; // catering manages its own fields
+    if (el.closest('[data-dash-section="menu"]')) return;             // menu manages its own fields
+    if (el.closest('[data-dash-section="catering"]')) return;         // catering manages its own fields
+    if (el.closest('[data-dash-section="website-content"]')) return;  // website-content manages its own fields
+    if (el.getAttribute('data-dc-tpl') === '85') return;             // order stages managed separately
     const key = 'marmara_dash_field_' + i;
     try {
       const saved = localStorage.getItem(key);
@@ -237,32 +244,109 @@ function wireToggles() {
   });
 }
 
+// ── Order stages (rename) ──────────────────────────────────────────────────────
+
+/** Update the text label on all visible pills that are currently showing stageIdx's color. */
+function updatePillsForStageIndex(stageIdx, newName) {
+  const c = STAGE_INDEX_COLORS[stageIdx];
+  if (!c) return;
+  document.querySelectorAll('[data-dash-section] div').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    if (!s.includes('border-radius: 999px') || !s.includes('cursor: pointer')) return;
+    if (el.style.background === c.bg) {
+      const sc = el.querySelector('.sc-interp');
+      if (sc) sc.textContent = newName; else el.textContent = newName;
+    }
+  });
+}
+
+function wireOrderStages() {
+  const root = document.querySelector('[data-dash-section="orders"]');
+  if (!root) return;
+  const inputs = Array.from(root.querySelectorAll('input[data-dc-tpl="85"]'));
+  if (inputs.length === 0) return;
+
+  // Restore saved names into STATUS_CYCLE
+  try {
+    const saved = localStorage.getItem('marmara_order_stages');
+    if (saved) {
+      const obj = JSON.parse(saved);
+      inputs.forEach((inp, i) => {
+        if (obj[i] != null) {
+          inp.value = obj[i];
+          STATUS_CYCLE[i] = obj[i];
+        }
+      });
+    }
+  } catch(e) {}
+
+  // Wire input events: update STATUS_CYCLE, persist, and refresh visible pills
+  inputs.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      const name = inp.value || _DEFAULT_STAGES[i];
+      STATUS_CYCLE[i] = name;
+      const obj = buildStagesObject(inputs.map((x, j) => x.value || _DEFAULT_STAGES[j]));
+      try { localStorage.setItem('marmara_order_stages', JSON.stringify(obj)); } catch(e) {}
+      updatePillsForStageIndex(i, name);
+    });
+  });
+}
+
 // ── Order status pills ─────────────────────────────────────────────────────────
 function getPillText(pill) {
   return (pill.querySelector('.sc-interp') || pill).textContent.trim();
 }
 function applyPillStatus(pill, status) {
-  const c = STATUS_COLORS[status]; if (!c) return;
+  const idx = STATUS_CYCLE.indexOf(status);
+  const c = idx >= 0 ? STAGE_INDEX_COLORS[idx] : null;
+  if (!c) return;
   pill.style.background = c.bg;
   pill.style.color = c.color;
   const sc = pill.querySelector('.sc-interp');
   if (sc) sc.textContent = status; else pill.textContent = status;
 }
 function wireOrderPills() {
+  // When stages have been renamed, HTML pills still show the old default names.
+  // We detect pills using both the current STATUS_CYCLE and the original defaults.
+  const allKnownStages = new Set([..._DEFAULT_STAGES, ...STATUS_CYCLE]);
+
+  // Map a possibly-stale name to the current STATUS_CYCLE equivalent.
+  function normaliseStatus(name) {
+    if (STATUS_CYCLE.includes(name)) return name;
+    const di = _DEFAULT_STAGES.indexOf(name);
+    return di >= 0 ? STATUS_CYCLE[di] : null;
+  }
+
   const pills = Array.from(document.querySelectorAll('[data-dash-section] div')).filter(el => {
     const s = el.getAttribute('style') || '';
     return s.includes('border-radius: 999px') && s.includes('cursor: pointer') &&
-      STATUS_CYCLE.includes(getPillText(el));
+      allKnownStages.has(getPillText(el));
   });
   pills.forEach((pill, i) => {
     const key = 'marmara_dash_pill_' + i;
+    let restored = false;
     try {
       const saved = localStorage.getItem(key);
-      if (saved && STATUS_CYCLE.includes(saved)) applyPillStatus(pill, saved);
+      if (saved) {
+        const norm = normaliseStatus(saved);
+        if (norm) { applyPillStatus(pill, norm); restored = true; }
+      }
     } catch(e) {}
+    // If nothing was restored from localStorage, but the HTML pill text is an old default
+    // that has since been renamed, display the current name.
+    if (!restored) {
+      const htmlText = getPillText(pill);
+      const htmlNorm = normaliseStatus(htmlText);
+      if (htmlNorm && htmlNorm !== htmlText) applyPillStatus(pill, htmlNorm);
+    }
     pill.addEventListener('click', () => {
-      const cur  = getPillText(pill);
-      const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur) + 1) % STATUS_CYCLE.length];
+      const cur = getPillText(pill);
+      let idx = STATUS_CYCLE.indexOf(cur);
+      if (idx < 0) {
+        const di = _DEFAULT_STAGES.indexOf(cur);
+        idx = di >= 0 ? di : 0;
+      }
+      const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
       applyPillStatus(pill, next);
       try { localStorage.setItem(key, next); } catch(e) {}
     });
@@ -279,22 +363,69 @@ function flashSaved(root) {
   clearTimeout(ind._ftid);
   ind._ftid = setTimeout(() => { ind.style.transform = 'scale(1)'; ind.style.opacity = '0.65'; }, 1200);
 }
+const SITE_CONTENT_KEY = 'marmara_site_content';
+
+// All 7 website-content fields: [inputTpl, storageKey, previewTpl|null]
+const SITE_CONTENT_FIELDS = [
+  ['250', 'heroBadge',      '260'],
+  ['253', 'heroHeadline',   '262'],
+  ['256', 'heroSub',        '263'],
+  ['270', 'promoText',      null],
+  ['276', 'aboutStory',     null],
+  ['279', 'beliefHeading',  null],
+  ['282', 'beliefBody',     null],
+];
+
+function saveSiteContent(root) {
+  const obj = {};
+  SITE_CONTENT_FIELDS.forEach(([inTpl, key]) => {
+    const inp = root.querySelector('[data-dc-tpl="' + inTpl + '"]');
+    if (inp) obj[key] = inp.value;
+  });
+  try { localStorage.setItem(SITE_CONTENT_KEY, JSON.stringify(obj)); } catch(e) {}
+}
+
 function wireWebsiteContentPreview() {
   const root = document.querySelector('[data-dash-section="website-content"]');
   if (!root) return;
-  const links = [
-    ['250','260'], ['253','262'], ['256','263'],
-  ];
-  links.forEach(([inTpl, prvTpl]) => {
+
+  // Wire up preview updates + localStorage persistence for all 7 fields
+  SITE_CONTENT_FIELDS.forEach(([inTpl, , prvTpl]) => {
     const inp = root.querySelector('[data-dc-tpl="' + inTpl + '"]');
-    const prv = root.querySelector('[data-dc-tpl="' + prvTpl + '"]');
-    if (!inp || !prv) return;
-    const target = prv.querySelector('.sc-interp') || prv;
-    inp.addEventListener('input', () => { target.textContent = inp.value; flashSaved(root); });
+    if (!inp) return;
+
+    // For the 3 fields that have a live preview panel
+    if (prvTpl) {
+      const prv = root.querySelector('[data-dc-tpl="' + prvTpl + '"]');
+      if (prv) {
+        const target = prv.querySelector('.sc-interp') || prv;
+        inp.addEventListener('input', () => { target.textContent = inp.value; });
+      }
+    }
+
+    inp.addEventListener('input', () => {
+      flashSaved(root);
+      saveSiteContent(root);
+    });
   });
-  // Refresh previews after persist() has restored values (runs async after sync init)
+
+  // After persist() has restored values, restore from marmara_site_content and re-sync previews
   setTimeout(() => {
-    links.forEach(([inTpl]) => {
+    try {
+      const raw = localStorage.getItem(SITE_CONTENT_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          SITE_CONTENT_FIELDS.forEach(([inTpl, key]) => {
+            const inp = root.querySelector('[data-dc-tpl="' + inTpl + '"]');
+            if (inp && saved[key] !== undefined) inp.value = saved[key];
+          });
+        }
+      }
+    } catch(e) {}
+    // Re-sync the 3 preview fields
+    SITE_CONTENT_FIELDS.forEach(([inTpl, , prvTpl]) => {
+      if (!prvTpl) return;
       const inp = root.querySelector('[data-dc-tpl="' + inTpl + '"]');
       if (inp) inp.dispatchEvent(new Event('input'));
     });
@@ -957,12 +1088,42 @@ function wireCateringSection() {
 function wireQrSection() {
   const root = document.querySelector('[data-dash-section="qr-codes"]');
   if (!root) return;
-  root.querySelectorAll('div').forEach(el => {
-    if (!el.textContent.includes('Download PNG')) return;
-    if (!(el.getAttribute('style') || '').includes('cursor: pointer')) return;
-    el.addEventListener('click', () => {
-      showToast('Preparing download…');
-      setTimeout(() => window.print(), 400);
+
+  const menuUrl = window.location.origin + '/menu';
+
+  // Replace each fake QR grid (data-dc-tpl="226") with real QR SVG
+  root.querySelectorAll('[data-dc-tpl="226"]').forEach(gridEl => {
+    try {
+      const svg = generateQrSvg(menuUrl, { fg: '#000', bg: '#fff', quiet: 4 });
+      gridEl.style.cssText = 'width: 100%; height: 100%; display: block;';
+      gridEl.innerHTML = svg;
+      const svgEl = gridEl.querySelector('svg');
+      if (svgEl) {
+        svgEl.style.width = '100%';
+        svgEl.style.height = '100%';
+        svgEl.style.display = 'block';
+      }
+    } catch (e) {
+      // leave fake grid as-is on error
+    }
+  });
+
+  // Wire each Download PNG button (data-dc-tpl="239")
+  root.querySelectorAll('[data-dc-tpl="239"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        const dataUrl = await generateQrPng(menuUrl, 300);
+        if (!dataUrl) return;
+        const a = document.createElement('a');
+        a.download = 'marmara-qr.png';
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('Saved');
+      } catch (e) {
+        showToast('Download failed');
+      }
     });
   });
 }
@@ -998,6 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
   show(initial, P, rows);
 
   wireToggles();
+  wireOrderStages();
   wireOrderPills();
   wireWebsiteContentPreview();
   wireBusinessInfoPreview();
