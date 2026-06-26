@@ -486,7 +486,7 @@ const MENU_CATEGORIES = [
 ];
 
 function savePlates(plates) {
-  try { localStorage.setItem(MENU_KEY, JSON.stringify(plates)); } catch(e) {}
+  try { localStorage.setItem(MENU_KEY, JSON.stringify(plates)); return true; } catch(e) { return false; }
 }
 
 function loadPlates() {
@@ -495,6 +495,43 @@ function loadPlates() {
     if (s) return JSON.parse(s);
   } catch(e) {}
   return null;
+}
+
+// ── Image compression ─────────────────────────────────────────────────────────
+const _MAX_IMAGE_DIM = 640;
+const _IMAGE_QUALITY = 0.7;
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      reject(new Error('Not an image'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+          if (w > _MAX_IMAGE_DIM || h > _MAX_IMAGE_DIM) {
+            if (w >= h) { h = Math.round(h * _MAX_IMAGE_DIM / w); w = _MAX_IMAGE_DIM; }
+            else { w = Math.round(w * _MAX_IMAGE_DIM / h); h = _MAX_IMAGE_DIM; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width  = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', _IMAGE_QUALITY));
+        } catch (err) { reject(err); }
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('FileReader error'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function seedFromMarkup(menuRoot) {
@@ -539,7 +576,13 @@ function createPlateRow(plate, plates, openEditorFn) {
   imgSlot.setAttribute('shape', 'rounded');
   imgSlot.setAttribute('radius', '11');
   imgSlot.setAttribute('placeholder', '');
-  imgSlot.style.cssText = 'width: 52px; height: 52px; flex: 0 0 auto; border: 1px solid rgb(231, 223, 208); border-radius: 11px;';
+  imgSlot.style.cssText = 'width: 52px; height: 52px; flex: 0 0 auto; border: 1px solid rgb(231, 223, 208); border-radius: 11px; overflow: hidden; position: relative;';
+  if (plate.image) {
+    const rowImg = document.createElement('img');
+    rowImg.src = plate.image;
+    rowImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+    imgSlot.appendChild(rowImg);
+  }
   row.appendChild(imgSlot);
 
   // Name + desc block
@@ -673,12 +716,14 @@ function wireMenuSection() {
   const deleteBtn    = editorView.querySelector('[data-dc-tpl="178"]');
   const backLink     = editorView.querySelector('[data-dc-tpl="136"]');
   const titleEl      = editorView.querySelector('[data-dc-tpl="29"] .sc-interp');
+  const photoSlot    = editorView.querySelector('[data-dc-tpl="140"]');
 
   let plates = [];
   let currentMode    = 'edit';
   let currentPlateId = null;
   let editorPopular  = false;
   let editorAvail    = true;
+  let editorImage    = null;
 
   function showMenuList()   { listView.style.display = ''; editorView.style.display = 'none'; }
   function showMenuEditor() { listView.style.display = 'none'; editorView.style.display = ''; }
@@ -695,6 +740,85 @@ function wireMenuSection() {
     if (availKnob)  availKnob.style.left        = on ? '22px' : '2px';
   }
 
+  // ── Editor photo slot setup ─────────────────────────────────────────────────
+  const photoFileInput = document.createElement('input');
+  photoFileInput.type = 'file';
+  photoFileInput.accept = 'image/*';
+  photoFileInput.style.display = 'none';
+  document.body.appendChild(photoFileInput);
+
+  if (photoSlot) {
+    photoSlot.style.cursor   = 'pointer';
+    photoSlot.style.overflow = 'hidden';
+    photoSlot.style.position = 'relative';
+    // Add placeholder label
+    const phLabel = document.createElement('div');
+    phLabel.dataset.photoPlaceholder = '1';
+    phLabel.style.cssText =
+      'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;gap:6px;color:rgb(154,143,126);font-size:13px;text-align:center;' +
+      'padding:16px;pointer-events:none;';
+    phLabel.innerHTML =
+      '<span style="font-size:28px;">🖼</span>' +
+      '<span style="font-weight:700;font-size:14px;color:rgb(107,99,88)">Drag a photo here</span>' +
+      '<span style="font-size:12.5px;">or click to browse</span>';
+    photoSlot.appendChild(phLabel);
+    // Wire click → file picker
+    photoSlot.addEventListener('click', () => photoFileInput.click());
+    // Wire drag-over / drop
+    photoSlot.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      photoSlot.style.borderColor = 'rgb(255, 138, 30)';
+      photoSlot.style.borderStyle = 'dashed';
+    });
+    photoSlot.addEventListener('dragleave', () => {
+      photoSlot.style.borderColor = '';
+      photoSlot.style.borderStyle = '';
+    });
+    photoSlot.addEventListener('drop', (e) => {
+      e.preventDefault();
+      photoSlot.style.borderColor = '';
+      photoSlot.style.borderStyle = '';
+      handleImageFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  photoFileInput.addEventListener('change', () => {
+    handleImageFile(photoFileInput.files[0]);
+    photoFileInput.value = ''; // reset so same file can be re-chosen
+  });
+
+  function setEditorPhotoPreview(dataUrl) {
+    editorImage = dataUrl;
+    if (!photoSlot) return;
+    const existing = photoSlot.querySelector('[data-photo-preview]');
+    if (existing) existing.remove();
+    const placeholder = photoSlot.querySelector('[data-photo-placeholder]');
+    const img = document.createElement('img');
+    img.dataset.photoPreview = '1';
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+    img.src = dataUrl;
+    photoSlot.appendChild(img);
+    if (placeholder) placeholder.style.display = 'none';
+  }
+
+  function clearEditorPhoto() {
+    editorImage = null;
+    if (!photoSlot) return;
+    const existing = photoSlot.querySelector('[data-photo-preview]');
+    if (existing) existing.remove();
+    const placeholder = photoSlot.querySelector('[data-photo-placeholder]');
+    if (placeholder) placeholder.style.display = '';
+  }
+
+  function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    compressImageFile(file).then(dataUrl => {
+      setEditorPhotoPreview(dataUrl);
+    }).catch(() => { /* ignore unsupported files */ });
+  }
+
   function openEditor(plateId) {
     currentMode    = 'edit';
     currentPlateId = plateId;
@@ -706,6 +830,8 @@ function wireMenuSection() {
     if (priceInput) priceInput.value = plate.price;
     setPopularUI(plate.popular);
     setAvailEditorUI(plate.available);
+    // Load plate image into editor
+    if (plate.image) { setEditorPhotoPreview(plate.image); } else { clearEditorPhoto(); }
     if (titleEl)   titleEl.textContent    = 'Edit plate';
     if (deleteBtn) deleteBtn.style.display = '';
     showMenuEditor();
@@ -720,6 +846,7 @@ function wireMenuSection() {
     if (priceInput) priceInput.value     = '0';
     setPopularUI(false);
     setAvailEditorUI(true);
+    clearEditorPhoto();
     if (titleEl)   titleEl.textContent    = 'Add plate';
     if (deleteBtn) deleteBtn.style.display = 'none';
     showMenuEditor();
@@ -742,18 +869,35 @@ function wireMenuSection() {
     if (currentMode === 'edit') {
       const idx = plates.findIndex(p => p.id === currentPlateId);
       if (idx === -1) return;
-      plates[idx] = { ...plates[idx], name, desc, category: catKey, categoryLabel: catEntry.label, price, popular: editorPopular, available: editorAvail };
+      const updated = { ...plates[idx], name, desc, category: catKey, categoryLabel: catEntry.label, price, popular: editorPopular, available: editorAvail };
+      if (editorImage !== null) updated.image = editorImage; else delete updated.image;
+      plates[idx] = updated;
     } else {
-      plates.push({
+      const newPlate = {
         id: 'plate_' + Date.now() + '_' + Math.random().toString(36).slice(2),
         name, desc, category: catKey, categoryLabel: catEntry.label, price, popular: editorPopular, available: editorAvail,
-      });
+      };
+      if (editorImage !== null) newPlate.image = editorImage;
+      plates.push(newPlate);
     }
-    savePlates(plates);
+
+    if (!savePlates(plates) && editorImage) {
+      // Quota exceeded — strip image from this plate and retry
+      const savedId = currentMode === 'edit' ? currentPlateId : plates[plates.length - 1].id;
+      plates = plates.map(p => {
+        if (p.id === savedId) { const { image, ...rest } = p; return rest; }
+        return p;
+      });
+      editorImage = null;
+      clearEditorPhoto();
+      savePlates(plates); // best-effort without image
+      showToast('Image too large — saved without photo');
+    } else {
+      showToast('Saved');
+    }
     renderPlates(menuRoot, plates, openEditor);
     if (deleteBtn) deleteBtn.style.display = '';
     showMenuList();
-    showToast('Saved');
   }
 
   function deletePlate() {

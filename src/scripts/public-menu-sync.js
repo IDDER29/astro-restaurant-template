@@ -118,6 +118,22 @@ function syncMenuCards() {
         if (nameSpan) nameSpan.textContent = plate.name;
         if (descSpan) descSpan.textContent = plate.desc;
 
+        // ── Image ────────────────────────────────────────────────────────
+        const existingPlateImg = slot.querySelector('[data-mm-plate-img]');
+        if (plate.image) {
+          if (existingPlateImg) {
+            existingPlateImg.src = plate.image;
+          } else {
+            const img = document.createElement('img');
+            img.dataset.mmPlateImg = '1';
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+            img.src = plate.image;
+            slot.appendChild(img);
+          }
+        } else if (existingPlateImg) {
+          existingPlateImg.remove();
+        }
+
         // ── Availability ─────────────────────────────────────────────────
         const soldOutAttr = '[data-marmara-sold-out]';
         const existingBadge = imageContainer?.querySelector(soldOutAttr);
@@ -229,6 +245,13 @@ function injectNewPlates() {
         if (slotEl) {
           slotEl.id = 'mphoto-' + plate.id;
           slotEl.setAttribute('placeholder', '[ ' + plate.name + ' ]');
+          if (plate.image) {
+            const img = document.createElement('img');
+            img.dataset.mmPlateImg = '1';
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+            img.src = plate.image;
+            slotEl.appendChild(img);
+          }
         }
 
         // ── Popular badge ───────────────────────────────────────────────
