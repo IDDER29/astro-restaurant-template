@@ -22,7 +22,11 @@ function navRows() {
   });
   for (const slug of SECTIONS) {
     const label = LABELS[slug];
-    const row = candidates.find((d) => d.textContent.replace(/\s+/g, ' ').trim().endsWith(label));
+    // Match by label substring (not endsWith): some rows have a trailing badge,
+    // e.g. "Orders" carries a "4" count, so its text is "Orders4". The 8 labels
+    // are mutually distinct, and the sidebar appears first in the DOM, so the
+    // first match is always the correct sidebar nav row.
+    const row = candidates.find((d) => d.textContent.replace(/\s+/g, ' ').includes(label));
     if (row) rows[slug] = row;
   }
   return rows;
