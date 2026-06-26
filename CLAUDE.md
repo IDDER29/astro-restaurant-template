@@ -4,31 +4,70 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A single self-contained file, `Marmara Restaurant Website.html` (~2 MB, one git commit). There is **no build system, package manager, dependency install, lint, or test suite** — opening the file in a browser runs the entire site. All assets (fonts, images, JS) are embedded inline as base64.
+The **active Marmara restaurant website** is an Astro static site under `src/`. Run it with npm (see commands below). It builds to `dist/` and deploys to Netlify or Cloudflare Pages.
 
-This file is a **generated bundle**, not hand-authored source. It is the export of a design-canvas tool (note the `.dc.html` source names and `x-dc` / `helmet` custom elements). Treat it as build output: small surgical edits are possible, but it is not structured for comfortable hand-editing, and there is no source these pages were "compiled" from in this repo.
+`Marmara Restaurant Website.html` in the root is an older single-file bundle kept as a **design and content reference only**. It is not the active site — do not treat it as the source of truth for ongoing work.
+
+## Commands
+
+```bash
+npm install        # install dependencies
+npm run dev        # dev server at http://localhost:4321
+npm run build      # production build → dist/
+npm run preview    # serve dist/ locally
+npm test           # Vitest unit tests (10 tests)
+```
 
 ## Architecture
 
-Three layers, from outermost in:
+The site is an Astro v4 project with static output (no server, no JS framework).
 
-1. **Shell** (top of file, lines ~1–17 and the router at the bottom). A fixed splash screen plus a single `<iframe id="frame">`. The shell owns navigation and swaps page content into the iframe via `frame.srcdoc`.
+### Pages (`src/pages/`)
 
-2. **`PAGES` object** (`const PAGES = { ... }`). Maps a page key to a full HTML document string. Six pages: `home`, `menu`, `catering`, `about`, `visit`, `admin`. `FILE_MAP` translates the original `*.dc.html` filenames (e.g. `Menu.dc.html`) to these keys. Routing is hash-based (`#menu`), driven by:
-   - a delegated click handler that intercepts `<a href$=".dc.html">` links inside the iframe,
-   - `hashchange`, and
-   - `postMessage({ marmaraNav: "...dc.html" })`.
+| File | Route | Description |
+|---|---|---|
+| `index.astro` | `/` | Home — hero, stats, featured items |
+| `menu.astro` | `/menu` | Full menu with category filter and cart |
+| `catering.astro` | `/catering` | Catering packages, quote form |
+| `about.astro` | `/about` | Story, beliefs |
+| `visit.astro` | `/visit` | Hours, address, map link |
+| `dashboard.astro` | `/dashboard` | Owner dashboard (localStorage-only CMS) |
 
-3. **Per-page bundler runtime** (repeated inside each page string). Each page is itself a mini-bundle containing three `<script type="__bundler/...">` blocks:
-   - `__bundler/manifest` — UUID → `{ mime, compressed, data }`, where `data` is base64 (gzip when `compressed`). Decoded at runtime into `blob:` URLs via `DecompressionStream`.
-   - `__bundler/ext_resources` — maps resource ids to manifest UUIDs.
-   - `__bundler/template` — the actual page HTML as an escaped JSON string, with asset UUIDs inline as placeholders.
+### Data (`src/data/`)
 
-   On `DOMContentLoaded` the runtime decodes assets to blob URLs, string-replaces every UUID in the template with its blob URL, injects a `window.__resources` map, reparses with `DOMParser`, and swaps in the document. Scripts are re-created (DOMParser scripts are inert) so they execute in order; `text/babel` scripts are fetched/inlined and transpiled with **Babel standalone** — i.e. pages are React apps (React → ReactDOM → Babel → `text/babel`) transformed in the browser.
+- `site.json` — contact details, hours, hero copy. **Contains placeholder values** (WhatsApp `212600000000`, phone, Instagram `marmara.fruits`, address). Swap these before go-live.
+- `menu.json` — 34 menu items across 9 categories.
+- `catering.json` — catering packages and pricing.
 
-## Working with the file
+All data files are loaded at build time by Astro pages — no runtime API calls.
 
-- **View it:** open `Marmara Restaurant Website.html` in a browser (or `file://` it). No server needed.
-- **Find a page's real content:** search for its key in `PAGES` (`grep -n '^"menu":'`), then the `__bundler/template` block within that page. Page bodies are escaped JSON strings, so newlines are `\\n` and quotes are `\\"`.
-- **Editing caveat:** the bundler runtime strips `integrity`/`crossorigin` and assumes the manifest/template script tags exist and are well-formed. Asset bytes are referenced by UUID; you cannot change an embedded image/font without re-encoding its base64 manifest entry. Prefer regenerating from the source design tool over hand-patching binary assets here.
-- The file is large; use `grep -n` / `awk` ranges rather than reading it whole.
+### Components (`src/components/`)
+
+Reusable Astro components: `Nav.astro`, `Footer.astro`, `MenuCard.astro`, `CartDrawer.astro`, `SectionHeader.astro`, `StatRow.astro`, `QrBlock.astro`.
+
+### Layouts (`src/layouts/`)
+
+`BaseLayout.astro` — shared `<head>`, SEO meta, nav and footer shell.
+
+### Scripts (`src/scripts/`)
+
+Client-side JS modules (not framework components):
+
+- `whatsapp.js` — `buildOrderUrl(cart, {phone})` and `buildContactUrl(phone, msg)` — pure functions, no side-effects.
+- `cart.js` — `addItem`, `removeItem`, `getCart`, `clearCart` — localStorage cart state.
+- `cms.js` — `loadContent`, `saveContent`, `mergeContent`, `STORAGE_KEY` — localStorage owner dashboard helpers.
+- `*-island.js` — client-side interactivity wired up per page.
+
+Each module has a paired `*.test.js` unit test.
+
+## Dashboard note
+
+The owner dashboard at `/dashboard` persists edits to `localStorage` only. Changes are visible on the editing device but do not update the built site for other visitors. A real CMS backend (e.g. Supabase) is phase 2.
+
+## Images
+
+`public/images/` contains gradient placeholders. See `public/images/CREDITS.md` for slot names and recommended sizes before adding real photos.
+
+## Reference: original bundle architecture
+
+The original `Marmara Restaurant Website.html` is a self-contained ~2 MB file. No build system — open in a browser. Its pages are React apps (Babel standalone, `text/babel`) embedded as escaped JSON strings inside `__bundler/template` script blocks inside a `PAGES` object. Navigation is hash-based, routing via `<iframe id="frame">` + `srcdoc` swap. Assets (fonts, images) are base64-encoded in a per-page `__bundler/manifest`. Do not hand-edit it; treat it as build output from a design-canvas tool.
