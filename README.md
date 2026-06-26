@@ -48,11 +48,11 @@ src/
     catering.json     — catering packages and pricing
   scripts/        # Client-side JS modules (cart, whatsapp, cms)
     whatsapp.js       — URL builders for WhatsApp ordering
-    cart.js           — localStorage cart state
+    cart.js           — pure cart math (no storage)
     cms.js            — localStorage owner dashboard helpers
     *-island.js       — client-side interactivity attached per page
 public/
-  images/         — image placeholders (see CREDITS.md before deploying)
+  images/         — holds only CREDITS.md; photo placeholders are CSS gradients rendered by MenuCard.astro until items get an `image` field
   og-image.svg    — Open Graph image
 ```
 
@@ -60,15 +60,15 @@ public/
 
 ## How ordering works
 
-Customers browse the menu, add items to a cart, and tap "Order via WhatsApp". This opens a pre-filled WhatsApp message to the restaurant's number. No payment gateway or backend is needed — orders land in WhatsApp as they already do today.
+Customers browse the menu, add items to a cart, and tap "Send order on WhatsApp". This opens a pre-filled WhatsApp message to the restaurant's number. No payment gateway or backend is needed — orders land in WhatsApp as they already do today.
 
-Catering quote requests work the same way: fill the form and tap "Send via WhatsApp".
+Catering quote requests work the same way: fill the form and tap "Send my request on WhatsApp".
 
 ---
 
 ## Demo note
 
-The owner dashboard (`/dashboard`) lets the restaurant owner edit menu names, descriptions and prices live in the browser. **These changes are persisted to `localStorage` on the editing device only.** They do not propagate to other devices or to visitors — the page still serves the JSON baked into the static build for everyone else.
+The owner dashboard (`/dashboard`) lets the restaurant owner edit the homepage headline, about story, promo banner and store-open status. **These changes are persisted to `localStorage` on the editing device only.** They do not propagate to other devices or to visitors — the page still serves the JSON baked into the static build for everyone else.
 
 Phase 2 (not in scope here) would replace this with a real CMS backend — for example Supabase — so that a single owner edit updates the live site for all visitors.
 
@@ -85,6 +85,7 @@ Before publishing the site, swap every placeholder in `src/data/site.json`:
 - [ ] `mapsQuery`: update to a query that finds the exact location on Google Maps
 - [ ] `hours.open` / `hours.close`: confirm actual opening/closing times
 - [ ] Add real food photos — see `public/images/CREDITS.md` for slot names and sizes; current gradients are placeholders
+- [ ] Replace `public/og-image.svg` with a 1200×630 PNG/JPG at `public/og-image.png` and update the `ogImage` default in `BaseLayout.astro` so social link previews render correctly (the current SVG is not reliably supported by all crawlers)
 - [ ] Set up a Google Business Profile so the restaurant appears in local search
 - [ ] Run `npm run build` after every data change and verify the output in `dist/`
 - [ ] Deploy (see below)

@@ -54,7 +54,7 @@ Reusable Astro components: `Nav.astro`, `Footer.astro`, `MenuCard.astro`, `CartD
 Client-side JS modules (not framework components):
 
 - `whatsapp.js` — `buildOrderUrl(cart, {phone})` and `buildContactUrl(phone, msg)` — pure functions, no side-effects.
-- `cart.js` — `addItem`, `removeItem`, `getCart`, `clearCart` — localStorage cart state.
+- `cart.js` — `addItem`, `removeItem`, `cartTotal`, `cartCount` — pure cart math (no storage).
 - `cms.js` — `loadContent`, `saveContent`, `mergeContent`, `STORAGE_KEY` — localStorage owner dashboard helpers.
 - `*-island.js` — client-side interactivity wired up per page.
 
@@ -66,7 +66,7 @@ The owner dashboard at `/dashboard` persists edits to `localStorage` only. Chang
 
 ## Images
 
-`public/images/` contains gradient placeholders. See `public/images/CREDITS.md` for slot names and recommended sizes before adding real photos.
+`public/images/` holds only `CREDITS.md`; photo placeholders are CSS gradients rendered by `MenuCard.astro` until items get an `image` field. See `public/images/CREDITS.md` for slot names and recommended sizes before adding real photos.
 
 ## Reference: original bundle architecture
 

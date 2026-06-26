@@ -17,7 +17,7 @@ const maps = `https://maps.google.com/?q=${encodeURIComponent(site.mapsQuery)}`;
     </table>
     <p style="color:#7a736b;margin-top:8px">Hours may extend on weekends and during exam season.</p>
   </section>
-  <script define:vars={{ days }}>
+  <script>
     const idx = (new Date().getDay() + 6) % 7;
     document.querySelectorAll('.hours tr')[idx]?.style.setProperty('color', 'var(--orange)');
   </script>

@@ -1,4 +1,5 @@
 import { buildContactUrl } from './whatsapp.js';
+import catering from '../data/catering.json';
 const form = document.getElementById('quote-form');
 const phone = form.dataset.whatsapp;
 form.addEventListener('submit', (e) => {
@@ -9,6 +10,5 @@ form.addEventListener('submit', (e) => {
 });
 const people = form.querySelector('[name=people]');
 const est = document.getElementById('estimate');
-const PERHEAD = 45;
-const update = () => { est.textContent = `Rough estimate: ${(Number(people.value) || 0) * PERHEAD} MAD`; };
+const update = () => { est.textContent = `Rough estimate: ${(Number(people.value) || 0) * catering.perHeadEstimate} MAD`; };
 people.addEventListener('input', update); update();

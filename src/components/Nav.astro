@@ -10,6 +10,12 @@ const wa = `https://wa.me/${site.whatsapp}`;
 <header class="nav"><div class="container nav-in">
   <a href="/" class="brand">Marmara</a>
   <nav>{links.map((l) => <a href={l.href}>{l.label}</a>)}</nav>
+  <details class="mobnav">
+    <summary aria-label="Open navigation menu">&#9776;</summary>
+    <div class="mobnav-links">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </div>
+  </details>
   <a class="btn btn-primary" href={wa}>Order on WhatsApp</a>
 </div></header>
 <style>
@@ -17,5 +23,11 @@ const wa = `https://wa.me/${site.whatsapp}`;
   .nav-in{display:flex;align-items:center;gap:20px;height:64px}
   .brand{font-family:var(--font-head);font-weight:800;font-size:22px}
   nav{display:flex;gap:18px;margin-left:auto}
-  @media(max-width:720px){nav{display:none}}
+  .mobnav{display:none;position:relative;margin-left:auto}
+  .mobnav summary{list-style:none;cursor:pointer;font-size:22px;padding:6px 10px;border-radius:8px;user-select:none}
+  .mobnav summary::-webkit-details-marker{display:none}
+  .mobnav-links{position:absolute;right:0;top:calc(100% + 8px);background:#fffbf4;border:1px solid rgba(24,20,16,.1);border-radius:12px;padding:8px 0;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.08);display:flex;flex-direction:column}
+  .mobnav-links a{padding:10px 20px;text-decoration:none;color:inherit;font-weight:500}
+  .mobnav-links a:hover{background:rgba(24,20,16,.05)}
+  @media(max-width:720px){nav{display:none}.mobnav{display:block}}
 </style>
