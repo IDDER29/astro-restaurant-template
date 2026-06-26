@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import menu from '../data/menu.json';
+import site from '../data/site.json';
+const demoOrders = [
+  { code: '#1042', customer: 'Yassine', summary: '2x Chicken Tacos, 1x Orange Press', total: '85 MAD', time: '23:14', status: 'New' },
+  { code: '#1041', customer: 'Salma', summary: '1x Double Burger, 1x Avocado Cocktail', total: '80 MAD', time: '22:58', status: 'Cooking' },
+  { code: '#1040', customer: 'Omar', summary: '1x Marmara Special Pizza', total: '65 MAD', time: '22:30', status: 'Ready' },
+];
+---
+<BaseLayout title="Owner dashboard — Marmara" description="Marmara owner panel (demo).">
+  <section class="container dash">
+    <div class="dash-head"><h1>Owner panel</h1><span class="demo">Demo — changes save to this device only</span></div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Store status</h3>
+        <label class="switch"><input type="checkbox" id="store-open" checked /> Open for orders</label>
+      </div>
+      <div class="card">
+        <h3>Promo banner</h3>
+        <input id="promo-text" placeholder="Shows as a strip across the top of your site" />
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Homepage headline</h3>
+        <input id="heroHeadline" value={site.hero.headline} />
+        <h3 style="margin-top:14px">About story</h3>
+        <textarea id="aboutStory">{site.about.story}</textarea>
+        <button class="btn btn-primary" id="save" style="margin-top:12px">Save</button>
+        <span id="saved" class="saved"></span>
+      </div>
+      <div class="card preview">
+        <h3>Live preview</h3>
+        <div class="pv-head" id="pv-head">{site.hero.headline}</div>
+        <p class="pv-body" id="pv-body">{site.about.story}</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Recent orders <small>(via WhatsApp)</small></h3>
+      <table class="orders">
+        <tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Time</th><th>Status</th></tr>
+        {demoOrders.map((o) => (<tr><td>{o.code}</td><td>{o.customer}</td><td>{o.summary}</td><td>{o.total}</td><td>{o.time}</td><td>{o.status}</td></tr>))}
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Menu — {menu.length} plates</h3>
+      <p>Photos and details here appear on your public Menu page.</p>
+      <table class="orders">
+        <tr><th>Plate</th><th>Category</th><th>Price</th></tr>
+        {menu.map((m) => (<tr><td>{m.name}</td><td>{m.category}</td><td>{m.price} MAD</td></tr>))}
+      </table>
+    </div>
+  </section>
+  <script>import '../scripts/dashboard-island.js';</script>
+</BaseLayout>
+<style>
+  .dash{padding:40px 20px}.dash-head{display:flex;align-items:center;gap:14px}
+  .demo{background:#fff3e0;color:#a85800;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .card{background:#fff;border-radius:18px;padding:20px}
+  .card input,.card textarea{width:100%;padding:10px;border:1.5px solid rgba(24,20,16,.15);border-radius:10px;font:inherit;margin-top:6px}
+  .preview .pv-head{font-family:var(--font-head);font-weight:800;font-size:24px}
+  .orders{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+  .orders th,.orders td{text-align:left;padding:8px;border-bottom:1px solid rgba(24,20,16,.08)}
+  .saved{color:#2e7d32;font-weight:700;margin-left:10px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}.orders{display:block;overflow-x:auto}}
+</style>
