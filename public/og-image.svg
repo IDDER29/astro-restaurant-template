@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <!-- Cream background -->
+  <rect width="1200" height="630" fill="#FFFBF4"/>
+
+  <!-- Orange accent square -->
+  <rect x="80" y="120" width="200" height="200" rx="24" fill="#FF8A1E"/>
+
+  <!-- Emoji in square -->
+  <text x="180" y="245" font-size="120" text-anchor="middle" dominant-baseline="middle">🍽️</text>
+
+  <!-- Marmara title -->
+  <text x="360" y="180" font-family="sans-serif" font-size="96" font-weight="bold" fill="#181410">Marmara</text>
+
+  <!-- Tagline -->
+  <text x="360" y="280" font-family="sans-serif" font-size="48" fill="#181410">Tacos, burgers &amp; fresh juice</text>
+  <text x="360" y="340" font-family="sans-serif" font-size="48" fill="#181410">Ben Guerir</text>
+
+  <!-- Open till 1 AM -->
+  <text x="360" y="440" font-family="sans-serif" font-size="40" fill="#FF8A1E" font-weight="bold">Open till 1 AM</text>
+</svg>

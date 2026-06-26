@@ -1,9 +1,13 @@
 ---
 const { item } = Astro.props;
 const accent = { tacos:'var(--acc-tacos)', sandwiches:'var(--acc-sandwiches)', burgers:'var(--acc-burgers)' }[item.category] || 'var(--orange)';
+const hasImage = item.image && typeof item.image === 'string' && item.image.trim() !== '';
 ---
 <article class="card" data-id={item.id} data-name={item.name} data-price={item.price}>
-  <div class="thumb" style={`--a:${accent}`}>{item.popular && <span class="pop">Popular</span>}</div>
+  <div class="thumb" style={hasImage ? undefined : `--a:${accent}`}>
+    {hasImage && <img src={item.image} alt={item.name} loading="lazy" />}
+    {item.popular && <span class="pop">Popular</span>}
+  </div>
   <div class="body">
     <h3>{item.name}</h3>
     <p class="desc">{item.desc}</p>
@@ -14,6 +18,7 @@ const accent = { tacos:'var(--acc-tacos)', sandwiches:'var(--acc-sandwiches)', b
 <style>
   .card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 1px 4px rgba(24,20,16,.06)}
   .thumb{height:120px;background:linear-gradient(135deg,var(--a),color-mix(in srgb,var(--a) 60%,#fff));position:relative}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
   .pop{position:absolute;top:10px;left:10px;background:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
   .body{padding:14px}.desc{color:#7a736b;font-size:14px;margin:4px 0 12px}
   .row{display:flex;align-items:center;justify-content:space-between}
