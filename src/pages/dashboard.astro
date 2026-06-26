@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import body from '../raw/admin.html?raw';
+import body from '../raw/dashboard-full.html?raw';
 ---
 <BaseLayout title="Owner dashboard — Marmara" description="Marmara owner panel (demo).">
   <Fragment set:html={body} />
+  <script>import '../scripts/dash.js';</script>
 </BaseLayout>
