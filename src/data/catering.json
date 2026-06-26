@@ -1,0 +1,11 @@
+{
+  "freeDeliveryNote": "Free delivery near UM6P over 200 MAD",
+  "noticeNote": "Order at least 24 hours ahead for groups over 20",
+  "trust": [
+    { "title": "From 5 to 120+", "note": "small huddle or big event" },
+    { "title": "Cooked fresh", "note": "arrives hot & ready to serve" },
+    { "title": "Free delivery", "note": "near UM6P over 200 MAD" },
+    { "title": "24h notice", "note": "for larger groups" }
+  ],
+  "perHeadEstimate": 45
+}

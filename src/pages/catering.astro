@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import catering from '../data/catering.json';
+import site from '../data/site.json';
+---
+<BaseLayout title="Catering & group orders — Marmara" description="Feed the whole group. Club events, study sessions, office mornings, birthdays. Fresh, hot, ready. Free delivery near UM6P over 200 MAD.">
+  <section class="container" style="padding:40px 20px">
+    <SectionHeader eyebrow="Catering & group orders" title="Feed the whole group." sub="Club events, study sessions, office mornings, birthdays. Tell us how many and when — we'll have it fresh, hot and ready." />
+    <div class="trust">{catering.trust.map((t) => (<div class="t"><strong>{t.title}</strong><span>{t.note}</span></div>))}</div>
+
+    <h2 style="margin-top:30px">Request a quote</h2>
+    <p style="color:#7a736b">Fill this in and it sends straight to our WhatsApp — no email, no waiting.</p>
+    <form id="quote-form" data-whatsapp={site.whatsapp} class="form">
+      <input name="name" placeholder="Your name" required />
+      <select name="type"><option>Club / student event</option><option>Study session</option><option>Office / company</option><option>Birthday / party</option><option>Other</option></select>
+      <input name="people" type="number" min="1" value="20" />
+      <input name="date" type="date" />
+      <input name="time" type="time" />
+      <textarea name="notes" placeholder="Anything else? (allergies, delivery spot)"></textarea>
+      <p id="estimate" class="est"></p>
+      <button class="btn btn-primary" type="submit">Send my request on WhatsApp</button>
+    </form>
+    <p style="color:#7a736b;margin-top:10px">{catering.freeDeliveryNote}. {catering.noticeNote}.</p>
+  </section>
+  <script>import '../scripts/catering-island.js';</script>
+</BaseLayout>
+<style>
+  .trust{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+  .t{background:#fff;border-radius:16px;padding:16px}.t strong{display:block}.t span{color:#7a736b;font-size:13px}
+  .form{display:grid;gap:12px;max-width:480px;margin-top:14px}
+  .form input,.form select,.form textarea{padding:12px;border:1.5px solid rgba(24,20,16,.15);border-radius:12px;font:inherit}
+  .est{font-weight:700}
+  @media(max-width:720px){.trust{grid-template-columns:1fr 1fr}}
+</style>
