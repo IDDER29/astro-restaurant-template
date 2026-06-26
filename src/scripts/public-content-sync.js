@@ -62,6 +62,15 @@ export function syncSiteContent() {
         // Skip this field silently — never break other fields
       }
     }
+
+    // Promo strip visibility
+    const promoEl = document.querySelector(FIELD_SELECTORS.promoText);
+    const promoStrip = promoEl ? promoEl.closest('[data-dc-tpl="8"]') : null;
+    if (promoStrip) {
+      // promoOn undefined = default on; false = hide
+      const shouldShow = content.promoOn !== false;
+      promoStrip.style.display = shouldShow ? '' : 'none';
+    }
   } catch (_outerErr) {
     // localStorage unavailable (private browsing, storage quota, etc.) — no-op
   }

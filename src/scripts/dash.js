@@ -385,6 +385,15 @@ function saveSiteContent(root) {
   try { localStorage.setItem(SITE_CONTENT_KEY, JSON.stringify(obj)); } catch(e) {}
 }
 
+function patchSiteContent(patch) {
+  try {
+    const raw = localStorage.getItem(SITE_CONTENT_KEY);
+    const obj = (raw ? JSON.parse(raw) : null) || {};
+    Object.assign(obj, patch);
+    localStorage.setItem(SITE_CONTENT_KEY, JSON.stringify(obj));
+  } catch(e) {}
+}
+
 function wireWebsiteContentPreview() {
   const root = document.querySelector('[data-dash-section="website-content"]');
   if (!root) return;
@@ -406,6 +415,14 @@ function wireWebsiteContentPreview() {
     inp.addEventListener('input', () => {
       flashSaved(root);
       saveSiteContent(root);
+      // Mirror promoText changes back to the dashboard promo input
+      if (inTpl === '270') {
+        const dashRoot = document.querySelector('[data-dash-section="dashboard"]');
+        if (dashRoot) {
+          const dashPromoInp = dashRoot.querySelector('[data-dc-tpl="59"]');
+          if (dashPromoInp && dashPromoInp.value !== inp.value) dashPromoInp.value = inp.value;
+        }
+      }
     });
   });
 
@@ -1144,6 +1161,53 @@ function wireDashboardSection(P, rows) {
     if (!(el.getAttribute('style') || '').includes('cursor: pointer')) return;
     el.addEventListener('click', () => applyOpenState(!getOpenState()));
   });
+
+  // ── Promo banner card (data-dc-tpl="53") ──
+  const promoCard = root.querySelector('[data-dc-tpl="53"]');
+  if (promoCard) {
+    // Wire promo text input → marmara_site_content.promoText
+    const promoInp = promoCard.querySelector('[data-dc-tpl="59"]');
+    if (promoInp) {
+      promoInp.addEventListener('input', () => {
+        patchSiteContent({ promoText: promoInp.value });
+        // Mirror to website-content section promoText input
+        const wcRoot = document.querySelector('[data-dash-section="website-content"]');
+        if (wcRoot) {
+          const wcInp = wcRoot.querySelector('[data-dc-tpl="270"]');
+          if (wcInp && wcInp.value !== promoInp.value) {
+            wcInp.value = promoInp.value;
+            wcInp.dispatchEvent(new Event('input'));
+          }
+        }
+      });
+    }
+
+    // Wire promo toggle (data-dc-tpl="56") → marmara_site_content.promoOn
+    const promoTrack = promoCard.querySelector('[data-dc-tpl="56"]');
+    if (promoTrack && isToggleTrack(promoTrack)) {
+      promoTrack.addEventListener('click', () => {
+        // wireToggles() already flipped + persisted the visual state on this same
+        // track (its handler is registered first); just mirror it into promoOn.
+        patchSiteContent({ promoOn: isOn(promoTrack) });
+      });
+    }
+
+    // On load: populate promo input and reflect toggle from marmara_site_content
+    setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(SITE_CONTENT_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved && typeof saved === 'object') {
+            if (promoInp && saved.promoText !== undefined) promoInp.value = saved.promoText;
+            if (promoTrack && isToggleTrack(promoTrack) && saved.promoOn !== undefined) {
+              applyToggle(promoTrack, saved.promoOn);
+            }
+          }
+        }
+      } catch(e) {}
+    }, 60);
+  }
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
