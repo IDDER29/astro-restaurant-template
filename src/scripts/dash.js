@@ -75,7 +75,8 @@ function show(slug, P, rows) {
 function persist(root) {
   const fields = root.querySelectorAll('input, textarea, select');
   fields.forEach((el, i) => {
-    if (el.closest('[data-dash-section="menu"]')) return; // menu manages its own fields
+    if (el.closest('[data-dash-section="menu"]')) return;     // menu manages its own fields
+    if (el.closest('[data-dash-section="catering"]')) return; // catering manages its own fields
     const key = 'marmara_dash_field_' + i;
     try {
       const saved = localStorage.getItem(key);
@@ -192,7 +193,8 @@ function applyHoursToggle(track, on) {
 function wireToggles() {
   const allTracks = Array.from(document.querySelectorAll('[data-dash-section] div'))
     .filter(isToggleTrack)
-    .filter(el => !el.closest('[data-dash-section="menu"]')); // menu manages its own toggles
+    .filter(el => !el.closest('[data-dash-section="menu"]'))     // menu manages its own toggles
+    .filter(el => !el.closest('[data-dash-section="catering"]')); // catering manages its own toggles
 
   // Capture initial ON knob position per track (before any state change)
   allTracks.forEach(track => {
@@ -642,23 +644,313 @@ function wireMenuSection() {
   if (addBtn) addBtn.addEventListener('click', openAddEditor);
 }
 
-// ── Catering section ───────────────────────────────────────────────────────────
+// ── Catering section ─────────────────────────────────────────────────────────
+const CATERING_KEY    = 'marmara_catering_packages';
+const FEAT_ON_BG      = 'rgb(255, 138, 30)';
+const FEAT_OFF_BG     = 'rgb(217, 210, 196)';
+const FEAT_ON_BORDER  = 'rgb(255, 138, 30)';
+const FEAT_OFF_BORDER = 'rgb(231, 223, 208)';
+
+function saveCateringPackages(pkgs) {
+  try { localStorage.setItem(CATERING_KEY, JSON.stringify(pkgs)); } catch(e) {}
+}
+
+function loadCateringPackages() {
+  try {
+    const s = localStorage.getItem(CATERING_KEY);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return null;
+}
+
+function seedCateringFromMarkup(root) {
+  const cards = root.querySelectorAll('[data-dc-tpl="293"]');
+  return Array.from(cards).map((card, idx) => {
+    const emojiInp  = card.querySelector('[data-dc-tpl="302"]');
+    const nameInp   = card.querySelector('[data-dc-tpl="303"]');
+    const servesInp = card.querySelector('[data-dc-tpl="307"]');
+    const priceInp  = card.querySelector('[data-dc-tpl="310"]');
+    const featTrack = card.querySelector('[data-dc-tpl="297"]');
+    const lines = Array.from(card.querySelectorAll('[data-dc-tpl="316"]')).map(inp => inp.value || '');
+    const name  = nameInp?.value?.trim() || ('Package ' + (idx + 1));
+    const featured = featTrack ? (featTrack.style.background || '').includes('255, 138, 30') : false;
+    return {
+      id:       'pkg_' + Date.now() + '_' + idx,
+      emoji:    emojiInp?.value  || '',
+      name,
+      serves:   servesInp?.value || '',
+      price:    priceInp?.value  || '0',
+      featured,
+      lines,
+    };
+  });
+}
+
 function wireCateringSection() {
   const root = document.querySelector('[data-dash-section="catering"]');
   if (!root) return;
-  root.querySelectorAll('div').forEach(el => {
-    const txt = el.textContent.trim();
-    const s   = el.getAttribute('style') || '';
-    if (!s.includes('cursor: pointer')) return;
-    if (txt.includes('Add package'))
-      el.addEventListener('click', () => showToast('Package added — fill in the details'));
-    else if (txt.includes('Add line'))
-      el.addEventListener('click', () => showToast('Line added — type to fill it in'));
-  });
-  // × delete-line buttons
-  root.querySelectorAll('[data-dc-tpl="317"]').forEach(btn => {
-    btn.addEventListener('click', () => showToast('Line removed'));
-  });
+
+  const grid      = root.querySelector('[data-dc-tpl="291"]');
+  const counterEl = root.querySelector('[data-dc-tpl="288"] .sc-interp');
+  if (!grid) return;
+
+  let pkgs = [];
+
+  function updateCounter() {
+    if (counterEl) {
+      counterEl.textContent = pkgs.length + ' package' + (pkgs.length !== 1 ? 's' : '');
+    }
+  }
+
+  /** Apply featured to exactly one package (radio single-select). */
+  function applyFeatured(newFeaturedId) {
+    pkgs.forEach(p => { p.featured = (p.id === newFeaturedId); });
+    grid.querySelectorAll('[data-dc-tpl="293"]').forEach(card => {
+      const isFeat = card.dataset.pkgId === newFeaturedId;
+      card.style.borderColor = isFeat ? FEAT_ON_BORDER : FEAT_OFF_BORDER;
+      const track = card.querySelector('[data-dc-tpl="297"]');
+      const knob  = card.querySelector('[data-dc-tpl="298"]');
+      if (track) track.style.background = isFeat ? FEAT_ON_BG : FEAT_OFF_BG;
+      if (knob)  knob.style.left        = isFeat ? '20px' : '2px';
+    });
+    saveCateringPackages(pkgs);
+  }
+
+  /** Build one "What's included" line row and wire its delete/save. */
+  function createLineRow(text, pkg) {
+    const row = document.createElement('div');
+    row.setAttribute('data-dc-tpl', '314');
+    row.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+
+    const check = document.createElement('span');
+    check.setAttribute('data-dc-tpl', '315');
+    check.style.cssText = 'color: rgb(118, 192, 67); font-weight: 700; flex: 0 0 auto;';
+    check.textContent = '✓';
+
+    const inp = document.createElement('input');
+    inp.setAttribute('data-dc-tpl', '316');
+    inp.value       = text;
+    inp.placeholder = 'Item description';
+    inp.style.cssText = 'flex: 1 1 0%; min-width: 0px; border: 1px solid rgb(231, 223, 208); border-radius: 9px; padding: 8px 10px; font-size: 13.5px;';
+    inp.addEventListener('input', () => {
+      pkg.lines = Array.from(row.parentElement.querySelectorAll('[data-dc-tpl="316"]')).map(i => i.value);
+      saveCateringPackages(pkgs);
+    });
+
+    const delBtn = document.createElement('div');
+    delBtn.setAttribute('data-dc-tpl', '317');
+    delBtn.style.cssText = 'width: 28px; height: 28px; flex: 0 0 auto; border-radius: 8px; background: rgb(246, 241, 234); color: rgb(154, 143, 126); display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer;';
+    delBtn.textContent = '×';
+    delBtn.addEventListener('click', () => {
+      const container = row.parentElement;
+      row.remove();
+      if (container) {
+        pkg.lines = Array.from(container.querySelectorAll('[data-dc-tpl="316"]')).map(i => i.value);
+      }
+      saveCateringPackages(pkgs);
+    });
+
+    row.appendChild(check);
+    row.appendChild(inp);
+    row.appendChild(delBtn);
+    return row;
+  }
+
+  /** Build a full package card element and wire all its controls. */
+  function createCard(pkg) {
+    const card = document.createElement('div');
+    card.setAttribute('data-dc-tpl', '293');
+    card.dataset.pkgId = pkg.id;
+    card.style.cssText = 'background: rgb(255, 255, 255); border: 1.5px solid ' +
+      (pkg.featured ? FEAT_ON_BORDER : FEAT_OFF_BORDER) +
+      '; border-radius: 18px; padding: 22px; position: relative;';
+
+    // ── Header: Featured toggle + Delete button ──────────────────────────────
+    const header = document.createElement('div');
+    header.setAttribute('data-dc-tpl', '294');
+    header.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px;';
+
+    const featLeft = document.createElement('div');
+    featLeft.setAttribute('data-dc-tpl', '295');
+    featLeft.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+
+    const featLabel = document.createElement('span');
+    featLabel.setAttribute('data-dc-tpl', '296');
+    featLabel.style.cssText = 'font-weight: 700; font-size: 13px; color: rgb(154, 143, 126);';
+    featLabel.textContent = 'Featured';
+
+    const featTrack = document.createElement('div');
+    featTrack.setAttribute('data-dc-tpl', '297');
+    featTrack.style.cssText = 'width: 42px; height: 24px; border-radius: 999px; position: relative; cursor: pointer;';
+    featTrack.style.background = pkg.featured ? FEAT_ON_BG : FEAT_OFF_BG;
+
+    const featKnob = document.createElement('div');
+    featKnob.setAttribute('data-dc-tpl', '298');
+    featKnob.style.cssText = 'position: absolute; top: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 2px;';
+    featKnob.style.left = pkg.featured ? '20px' : '2px';
+    featTrack.appendChild(featKnob);
+    featTrack.addEventListener('click', () => applyFeatured(pkg.id));
+
+    featLeft.appendChild(featLabel);
+    featLeft.appendChild(featTrack);
+
+    const delPkgBtn = document.createElement('div');
+    delPkgBtn.setAttribute('data-dc-tpl', '299');
+    delPkgBtn.style.cssText = 'width: 32px; height: 32px; flex: 0 0 auto; border-radius: 9px; background: rgb(250, 243, 243); color: rgb(226, 59, 59); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer;';
+    delPkgBtn.textContent = '×';
+    delPkgBtn.addEventListener('click', () => {
+      const idx = pkgs.findIndex(p => p.id === pkg.id);
+      if (idx !== -1) pkgs.splice(idx, 1);
+      card.remove();
+      saveCateringPackages(pkgs);
+      updateCounter();
+    });
+
+    header.appendChild(featLeft);
+    header.appendChild(delPkgBtn);
+    card.appendChild(header);
+
+    // ── Emoji + Name row ─────────────────────────────────────────────────────
+    const nameRow = document.createElement('div');
+    nameRow.setAttribute('data-dc-tpl', '300');
+    nameRow.style.cssText = 'display: flex; gap: 12px; margin-bottom: 12px;';
+
+    const imgSlot = document.createElement('image-slot');
+    imgSlot.setAttribute('data-dc-tpl', '301');
+    imgSlot.setAttribute('shape', 'rounded');
+    imgSlot.setAttribute('radius', '12');
+    imgSlot.setAttribute('placeholder', 'Photo');
+    imgSlot.style.cssText = 'width: 72px; height: 72px; flex: 0 0 auto; border: 1px solid rgb(231, 223, 208); border-radius: 12px;';
+
+    const emojiInp = document.createElement('input');
+    emojiInp.setAttribute('data-dc-tpl', '302');
+    emojiInp.value     = pkg.emoji;
+    emojiInp.style.cssText = 'width: 54px; text-align: center; border: 1px solid rgb(231, 223, 208); border-radius: 10px; padding: 10px 4px; font-size: 20px;';
+    emojiInp.addEventListener('input', () => { pkg.emoji = emojiInp.value; saveCateringPackages(pkgs); });
+
+    const nameInp = document.createElement('input');
+    nameInp.setAttribute('data-dc-tpl', '303');
+    nameInp.value       = pkg.name;
+    nameInp.placeholder = 'Package name';
+    nameInp.style.cssText = 'flex: 1 1 0%; min-width: 0px; border: 1px solid rgb(231, 223, 208); border-radius: 10px; padding: 10px 12px; font-size: 15.5px; font-weight: 700;';
+    nameInp.addEventListener('input', () => { pkg.name = nameInp.value; saveCateringPackages(pkgs); });
+
+    nameRow.appendChild(imgSlot);
+    nameRow.appendChild(emojiInp);
+    nameRow.appendChild(nameInp);
+    card.appendChild(nameRow);
+
+    // ── Serves + Price row ───────────────────────────────────────────────────
+    const spRow = document.createElement('div');
+    spRow.setAttribute('data-dc-tpl', '304');
+    spRow.style.cssText = 'display: flex; gap: 10px; margin-top: 10px;';
+
+    const servesCol = document.createElement('div');
+    servesCol.setAttribute('data-dc-tpl', '305');
+    servesCol.style.cssText = 'flex: 1 1 0%;';
+    const servesLabel = document.createElement('div');
+    servesLabel.setAttribute('data-dc-tpl', '306');
+    servesLabel.style.cssText = 'font-size: 12px; font-weight: 700; color: rgb(154, 143, 126); margin-bottom: 5px;';
+    servesLabel.textContent = 'Serves';
+    const servesInp = document.createElement('input');
+    servesInp.setAttribute('data-dc-tpl', '307');
+    servesInp.value       = pkg.serves;
+    servesInp.placeholder = 'Serves ~10';
+    servesInp.style.cssText = 'width: 100%; border: 1px solid rgb(231, 223, 208); border-radius: 10px; padding: 9px 11px; font-size: 14px;';
+    servesInp.addEventListener('input', () => { pkg.serves = servesInp.value; saveCateringPackages(pkgs); });
+    servesCol.appendChild(servesLabel);
+    servesCol.appendChild(servesInp);
+
+    const priceCol = document.createElement('div');
+    priceCol.setAttribute('data-dc-tpl', '308');
+    priceCol.style.cssText = 'width: 120px;';
+    const priceLabel = document.createElement('div');
+    priceLabel.setAttribute('data-dc-tpl', '309');
+    priceLabel.style.cssText = 'font-size: 12px; font-weight: 700; color: rgb(154, 143, 126); margin-bottom: 5px;';
+    priceLabel.textContent = 'Price (MAD)';
+    const priceInp = document.createElement('input');
+    priceInp.setAttribute('data-dc-tpl', '310');
+    priceInp.value = pkg.price;
+    priceInp.setAttribute('inputmode', 'numeric');
+    priceInp.style.cssText = 'width: 100%; border: 1px solid rgb(231, 223, 208); border-radius: 10px; padding: 9px 11px; font-size: 15px; font-weight: 700;';
+    priceInp.addEventListener('input', () => { pkg.price = priceInp.value; saveCateringPackages(pkgs); });
+    priceCol.appendChild(priceLabel);
+    priceCol.appendChild(priceInp);
+
+    spRow.appendChild(servesCol);
+    spRow.appendChild(priceCol);
+    card.appendChild(spRow);
+
+    // ── What's included ──────────────────────────────────────────────────────
+    const inclLabel = document.createElement('div');
+    inclLabel.setAttribute('data-dc-tpl', '311');
+    inclLabel.style.cssText = "font-size: 12px; font-weight: 700; color: rgb(154, 143, 126); margin: 14px 0px 7px;";
+    inclLabel.textContent = "What's included";
+    card.appendChild(inclLabel);
+
+    const linesContainer = document.createElement('div');
+    linesContainer.setAttribute('data-dc-tpl', '312');
+    linesContainer.style.cssText = 'display: flex; flex-direction: column; gap: 7px;';
+
+    pkg.lines.forEach(line => linesContainer.appendChild(createLineRow(line, pkg)));
+
+    const addLineBtn = document.createElement('div');
+    addLineBtn.setAttribute('data-dc-tpl', '318');
+    addLineBtn.style.cssText = 'cursor: pointer; align-self: flex-start; font-size: 13.5px; font-weight: 700; color: rgb(255, 138, 30); padding: 6px 2px;';
+    addLineBtn.textContent = '+ Add line';
+    addLineBtn.addEventListener('click', () => {
+      const newRow = createLineRow('', pkg);
+      linesContainer.insertBefore(newRow, addLineBtn);
+      const newInp = newRow.querySelector('[data-dc-tpl="316"]');
+      if (newInp) newInp.focus();
+      pkg.lines = Array.from(linesContainer.querySelectorAll('[data-dc-tpl="316"]')).map(i => i.value);
+      saveCateringPackages(pkgs);
+    });
+    linesContainer.appendChild(addLineBtn);
+    card.appendChild(linesContainer);
+
+    return card;
+  }
+
+  /** Clear the grid and re-render all packages from pkgs array. */
+  function renderPackages() {
+    grid.querySelectorAll('[data-dc-tpl="293"]').forEach(c => c.remove());
+    pkgs.forEach(pkg => grid.appendChild(createCard(pkg)));
+    updateCounter();
+  }
+
+  // Seed or restore packages
+  const saved = loadCateringPackages();
+  if (saved && saved.length > 0) {
+    pkgs = saved;
+  } else {
+    pkgs = seedCateringFromMarkup(root);
+    saveCateringPackages(pkgs);
+  }
+  renderPackages();
+
+  // Wire "Add package" button
+  const addPkgBtn = root.querySelector('[data-dc-tpl="290"]');
+  if (addPkgBtn) {
+    addPkgBtn.addEventListener('click', () => {
+      const newPkg = {
+        id:       'pkg_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+        emoji:    '🍽️',
+        name:     '',
+        serves:   '',
+        price:    '0',
+        featured: false,
+        lines:    [],
+      };
+      pkgs.push(newPkg);
+      const card = createCard(newPkg);
+      grid.appendChild(card);
+      updateCounter();
+      saveCateringPackages(pkgs);
+      const nameInp = card.querySelector('[data-dc-tpl="303"]');
+      if (nameInp) nameInp.focus();
+    });
+  }
 }
 
 // ── QR codes section ───────────────────────────────────────────────────────────
