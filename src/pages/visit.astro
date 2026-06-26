@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import site from '../data/site.json';
+const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const maps = `https://maps.google.com/?q=${encodeURIComponent(site.mapsQuery)}`;
+---
+<BaseLayout title="Visit — Marmara, Ben Guerir" description="Find Marmara on Avenue Hassan II in Ben Guerir, 2 minutes from UM6P. Open every day 9 AM–1 AM.">
+  <section class="container" style="padding:40px 20px">
+    <SectionHeader eyebrow="Find us" title="Two minutes from campus." sub={`On the corner of Avenue Hassan II, in the heart of Ben Guerir. ${site.address}`} />
+    <a class="btn btn-primary" href={maps}>Open in Maps</a>
+    <div class="map" aria-label="Map location">Interactive Google Map — Marmara, Ben Guerir</div>
+    <h2 style="margin-top:30px">Opening hours</h2>
+    <table class="hours">
+      {days.map((d) => (
+        <tr data-day={d}><td>{d}</td><td>{site.hours.open} – {site.hours.close}</td></tr>))}
+    </table>
+    <p style="color:#7a736b;margin-top:8px">Hours may extend on weekends and during exam season.</p>
+  </section>
+  <script define:vars={{ days }}>
+    const idx = (new Date().getDay() + 6) % 7;
+    document.querySelectorAll('.hours tr')[idx]?.style.setProperty('color', 'var(--orange)');
+  </script>
+</BaseLayout>
+<style>
+  .map{height:260px;background:linear-gradient(135deg,#e8efe0,#d6e4f0);border-radius:18px;display:flex;align-items:center;justify-content:center;color:#5b544d;margin-top:16px}
+  .hours{width:100%;max-width:420px;border-collapse:collapse;margin-top:10px}
+  .hours td{padding:8px 0;border-bottom:1px solid rgba(24,20,16,.08)}
+  .hours td:last-child{text-align:right;font-weight:700}
+</style>
