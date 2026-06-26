@@ -75,6 +75,7 @@ function show(slug, P, rows) {
 function persist(root) {
   const fields = root.querySelectorAll('input, textarea, select');
   fields.forEach((el, i) => {
+    if (el.closest('[data-dash-section="menu"]')) return; // menu manages its own fields
     const key = 'marmara_dash_field_' + i;
     try {
       const saved = localStorage.getItem(key);
@@ -190,7 +191,8 @@ function applyHoursToggle(track, on) {
 // ── Wire all toggles ───────────────────────────────────────────────────────────
 function wireToggles() {
   const allTracks = Array.from(document.querySelectorAll('[data-dash-section] div'))
-    .filter(isToggleTrack);
+    .filter(isToggleTrack)
+    .filter(el => !el.closest('[data-dash-section="menu"]')); // menu manages its own toggles
 
   // Capture initial ON knob position per track (before any state change)
   allTracks.forEach(track => {
@@ -317,35 +319,327 @@ function wireBusinessInfoPreview() {
   }, 60);
 }
 
+// ── Menu CRUD ─────────────────────────────────────────────────────────────────
+const MENU_KEY = 'marmara_menu_plates';
+const POPULAR_ON_BG  = 'rgb(255, 138, 30)';
+const POPULAR_OFF_BG = 'rgb(203, 213, 225)';
+const MENU_CATEGORIES = [
+  { key: 'breakfast',  label: 'Breakfast' },
+  { key: 'sandwiches', label: 'Sandwiches & Paninis' },
+  { key: 'tacos',      label: 'Moroccan Tacos' },
+  { key: 'burgers',    label: 'Burgers' },
+  { key: 'pizza',      label: 'Pizza' },
+  { key: 'pasta',      label: 'Pasta' },
+  { key: 'salads',     label: 'Salads' },
+  { key: 'crepes',     label: 'Crepes' },
+  { key: 'drinks',     label: 'Juices & Drinks' },
+];
+
+function savePlates(plates) {
+  try { localStorage.setItem(MENU_KEY, JSON.stringify(plates)); } catch(e) {}
+}
+
+function loadPlates() {
+  try {
+    const s = localStorage.getItem(MENU_KEY);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return null;
+}
+
+function seedFromMarkup(menuRoot) {
+  const rows = menuRoot.querySelectorAll('[data-dc-tpl="119"]');
+  return Array.from(rows).map(row => {
+    const name      = row.querySelector('[data-dc-tpl="122"] .sc-interp')?.textContent.trim() || '';
+    const desc      = row.querySelector('[data-dc-tpl="125"] .sc-interp')?.textContent.trim() || '';
+    const catLabel  = row.querySelector('[data-dc-tpl="126"] .sc-interp')?.textContent.trim() || '';
+    const priceText = row.querySelector('[data-dc-tpl="127"] .sc-interp')?.textContent.trim() || '0';
+    const price     = parseInt(priceText) || 0;
+    const availTrack = row.querySelector('[data-dc-tpl="129"]');
+    const available  = availTrack ? (availTrack.style.background || '').includes('46, 158, 91') : true;
+    const popular    = !!row.querySelector('[data-dc-tpl="124"]');
+    const cl = catLabel.toLowerCase();
+    const cat = MENU_CATEGORIES.find(c => {
+      const l = c.label.toLowerCase();
+      return l === cl || l.includes(cl) || cl.includes(c.key);
+    });
+    const category      = cat ? cat.key : 'sandwiches';
+    const categoryLabel = cat ? cat.label : catLabel;
+    return {
+      id: 'plate_' + name.replace(/\s+/g, '_').toLowerCase(),
+      name, desc, category, categoryLabel, price, popular, available,
+    };
+  });
+}
+
+function applyRowAvailToggle(track, knob, on) {
+  track.style.background = on ? TOGGLE_ON_BG : TOGGLE_OFF_BG;
+  if (knob) knob.style.left = on ? '22px' : '2px';
+}
+
+function createPlateRow(plate, plates, openEditorFn) {
+  const row = document.createElement('div');
+  row.setAttribute('data-dc-tpl', '119');
+  row.dataset.plateId = plate.id;
+  row.style.cssText = 'display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-top: 1px solid rgb(242, 236, 224);';
+
+  // Photo slot
+  const imgSlot = document.createElement('image-slot');
+  imgSlot.setAttribute('data-dc-tpl', '120');
+  imgSlot.setAttribute('shape', 'rounded');
+  imgSlot.setAttribute('radius', '11');
+  imgSlot.setAttribute('placeholder', '');
+  imgSlot.style.cssText = 'width: 52px; height: 52px; flex: 0 0 auto; border: 1px solid rgb(231, 223, 208); border-radius: 11px;';
+  row.appendChild(imgSlot);
+
+  // Name + desc block
+  const nameBlock = document.createElement('div');
+  nameBlock.setAttribute('data-dc-tpl', '121');
+  nameBlock.style.cssText = 'flex: 1 1 0%; min-width: 0px; cursor: pointer;';
+
+  const nameDiv = document.createElement('div');
+  nameDiv.setAttribute('data-dc-tpl', '122');
+  nameDiv.style.cssText = 'font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;';
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'sc-interp';
+  nameSpan.textContent = plate.name;
+  nameDiv.appendChild(nameSpan);
+  if (plate.popular) {
+    const star = document.createElement('span');
+    star.setAttribute('data-dc-tpl', '124');
+    star.style.cssText = 'font-size: 11px; font-weight: 700; color: rgb(255, 138, 30);';
+    star.textContent = '★';
+    nameDiv.appendChild(star);
+  }
+  nameBlock.appendChild(nameDiv);
+
+  const descDiv = document.createElement('div');
+  descDiv.setAttribute('data-dc-tpl', '125');
+  descDiv.style.cssText = 'font-size: 12.5px; color: rgb(154, 143, 126); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+  const descSpan = document.createElement('span');
+  descSpan.className = 'sc-interp';
+  descSpan.textContent = plate.desc;
+  descDiv.appendChild(descSpan);
+  nameBlock.appendChild(descDiv);
+  row.appendChild(nameBlock);
+
+  // Category
+  const catDiv = document.createElement('div');
+  catDiv.setAttribute('data-dc-tpl', '126');
+  catDiv.style.cssText = 'width: 120px; font-size: 13.5px; color: rgb(107, 99, 88);';
+  const catSpan = document.createElement('span');
+  catSpan.className = 'sc-interp';
+  catSpan.textContent = plate.categoryLabel;
+  catDiv.appendChild(catSpan);
+  row.appendChild(catDiv);
+
+  // Price
+  const priceDiv = document.createElement('div');
+  priceDiv.setAttribute('data-dc-tpl', '127');
+  priceDiv.style.cssText = 'width: 84px; text-align: right; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 15px;';
+  const priceSpan = document.createElement('span');
+  priceSpan.className = 'sc-interp';
+  priceSpan.textContent = plate.price + ' MAD';
+  priceDiv.appendChild(priceSpan);
+  row.appendChild(priceDiv);
+
+  // Available toggle
+  const availOuter = document.createElement('div');
+  availOuter.setAttribute('data-dc-tpl', '128');
+  availOuter.style.cssText = 'width: 84px; display: flex; justify-content: center;';
+  const availTrack = document.createElement('div');
+  availTrack.setAttribute('data-dc-tpl', '129');
+  availTrack.style.cssText = 'width: 42px; height: 24px; border-radius: 999px; position: relative; cursor: pointer;';
+  const availKnob = document.createElement('div');
+  availKnob.setAttribute('data-dc-tpl', '130');
+  availKnob.style.cssText = 'position: absolute; top: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 2px;';
+  applyRowAvailToggle(availTrack, availKnob, plate.available);
+  availTrack.appendChild(availKnob);
+  availOuter.appendChild(availTrack);
+  row.appendChild(availOuter);
+
+  // Edit button
+  const actDiv = document.createElement('div');
+  actDiv.setAttribute('data-dc-tpl', '131');
+  actDiv.style.cssText = 'width: 64px; display: flex; justify-content: flex-end; gap: 8px;';
+  const editBtn = document.createElement('div');
+  editBtn.setAttribute('data-dc-tpl', '132');
+  editBtn.style.cssText = 'height: 32px; padding: 0px 12px; border-radius: 9px; background: rgb(241, 237, 230); color: rgb(24, 20, 16); display: flex; align-items: center; font-size: 13px; font-weight: 700; cursor: pointer;';
+  editBtn.textContent = 'Edit';
+  actDiv.appendChild(editBtn);
+  row.appendChild(actDiv);
+
+  // Wire available toggle (closure over plate ref in array)
+  availTrack.addEventListener('click', () => {
+    const p = plates.find(x => x.id === plate.id);
+    if (!p) return;
+    p.available = !p.available;
+    applyRowAvailToggle(availTrack, availKnob, p.available);
+    savePlates(plates);
+  });
+
+  // Wire edit button + name click
+  const openEdit = () => openEditorFn(plate.id);
+  editBtn.addEventListener('click', openEdit);
+  nameBlock.addEventListener('click', openEdit);
+
+  return row;
+}
+
+function updateMenuCounter(menuRoot, count) {
+  const el = menuRoot.querySelector('[data-dc-tpl="107"] .sc-interp');
+  if (el) el.textContent = count + ' items';
+}
+
+function renderPlates(menuRoot, plates, openEditorFn) {
+  const container = menuRoot.querySelector('[data-dc-tpl="110"]');
+  if (!container) return;
+  container.querySelectorAll('[data-dc-tpl="119"]').forEach(r => r.remove());
+  plates.forEach(plate => container.appendChild(createPlateRow(plate, plates, openEditorFn)));
+  updateMenuCounter(menuRoot, plates.length);
+}
+
 // ── Menu section ───────────────────────────────────────────────────────────────
 function wireMenuSection() {
-  const root = document.querySelector('[data-dash-section="menu"]');
-  if (!root) return;
-  // Edit buttons
-  root.querySelectorAll('div').forEach(el => {
-    if (el.textContent.trim() !== 'Edit') return;
-    if (!(el.getAttribute('style') || '').includes('cursor: pointer')) return;
-    el.addEventListener('click', () => {
-      const row = el.closest('[style*="border-top"]');
-      if (row) {
-        row.style.outline      = '2.5px solid rgb(255, 138, 30)';
-        row.style.borderRadius = '12px';
-        setTimeout(() => { row.style.outline = ''; row.style.borderRadius = ''; }, 2000);
+  const menuRoot   = document.querySelector('[data-dash-section="menu"]');
+  if (!menuRoot) return;
+  const listView   = menuRoot.querySelector('[data-menu-view="list"]');
+  const editorView = menuRoot.querySelector('[data-menu-view="editor"]');
+  if (!listView || !editorView) return;
+
+  // Editor field references
+  const nameInput    = editorView.querySelector('[data-dc-tpl="145"]');
+  const descInput    = editorView.querySelector('[data-dc-tpl="148"]');
+  const catSelect    = editorView.querySelector('[data-dc-tpl="152"]');
+  const priceInput   = editorView.querySelector('[data-dc-tpl="164"]');
+  const popularWrap  = editorView.querySelector('[data-dc-tpl="166"]');
+  const popularTrack = editorView.querySelector('[data-dc-tpl="167"]');
+  const popularKnob  = popularTrack ? popularTrack.querySelector('div') : null;
+  const availWrap    = editorView.querySelector('[data-dc-tpl="170"]');
+  const availTrack   = editorView.querySelector('[data-dc-tpl="171"]');
+  const availKnob    = availTrack ? availTrack.querySelector('div') : null;
+  const saveBtn      = editorView.querySelector('[data-dc-tpl="175"]');
+  const cancelBtn    = editorView.querySelector('[data-dc-tpl="176"]');
+  const deleteBtn    = editorView.querySelector('[data-dc-tpl="178"]');
+  const backLink     = editorView.querySelector('[data-dc-tpl="136"]');
+  const titleEl      = editorView.querySelector('[data-dc-tpl="29"] .sc-interp');
+
+  let plates = [];
+  let currentMode    = 'edit';
+  let currentPlateId = null;
+  let editorPopular  = false;
+  let editorAvail    = true;
+
+  function showMenuList()   { listView.style.display = ''; editorView.style.display = 'none'; }
+  function showMenuEditor() { listView.style.display = 'none'; editorView.style.display = ''; }
+
+  function setPopularUI(on) {
+    editorPopular = on;
+    if (popularTrack) popularTrack.style.background = on ? POPULAR_ON_BG : POPULAR_OFF_BG;
+    if (popularKnob)  popularKnob.style.left        = on ? '20px' : '2px';
+  }
+
+  function setAvailEditorUI(on) {
+    editorAvail = on;
+    if (availTrack) availTrack.style.background = on ? TOGGLE_ON_BG : TOGGLE_OFF_BG;
+    if (availKnob)  availKnob.style.left        = on ? '22px' : '2px';
+  }
+
+  function openEditor(plateId) {
+    currentMode    = 'edit';
+    currentPlateId = plateId;
+    const plate = plates.find(p => p.id === plateId);
+    if (!plate) return;
+    if (nameInput)  nameInput.value  = plate.name;
+    if (descInput)  descInput.value  = plate.desc;
+    if (catSelect)  catSelect.value  = plate.category;
+    if (priceInput) priceInput.value = plate.price;
+    setPopularUI(plate.popular);
+    setAvailEditorUI(plate.available);
+    if (titleEl)   titleEl.textContent    = 'Edit plate';
+    if (deleteBtn) deleteBtn.style.display = '';
+    showMenuEditor();
+  }
+
+  function openAddEditor() {
+    currentMode    = 'add';
+    currentPlateId = null;
+    if (nameInput)  nameInput.value      = '';
+    if (descInput)  descInput.value      = '';
+    if (catSelect)  catSelect.selectedIndex = 0;
+    if (priceInput) priceInput.value     = '0';
+    setPopularUI(false);
+    setAvailEditorUI(true);
+    if (titleEl)   titleEl.textContent    = 'Add plate';
+    if (deleteBtn) deleteBtn.style.display = 'none';
+    showMenuEditor();
+  }
+
+  function saveEditor() {
+    const name = nameInput ? nameInput.value.trim() : '';
+    if (!name) {
+      if (nameInput) {
+        nameInput.style.borderColor = 'rgb(226, 59, 59)';
+        setTimeout(() => { nameInput.style.borderColor = ''; }, 1500);
       }
-      showToast('Edit mode — update plate details above');
-    });
-  });
-  // Image slots
-  root.querySelectorAll('image-slot').forEach(slot => {
-    slot.style.cursor = 'pointer';
-    slot.addEventListener('click', () => showToast('Image upload is part of go-live'));
-  });
-  // Add new plate
-  root.querySelectorAll('div').forEach(el => {
-    if (!el.textContent.trim().includes('Add new plate')) return;
-    if (!(el.getAttribute('style') || '').includes('cursor: pointer')) return;
-    el.addEventListener('click', () => showToast('New plate form — coming at go-live'));
-  });
+      return;
+    }
+    const catKey   = catSelect ? catSelect.value : 'sandwiches';
+    const catEntry = MENU_CATEGORIES.find(c => c.key === catKey) || MENU_CATEGORIES[1];
+    const price    = parseInt(priceInput ? priceInput.value : '0') || 0;
+    const desc     = descInput ? descInput.value.trim() : '';
+
+    if (currentMode === 'edit') {
+      const idx = plates.findIndex(p => p.id === currentPlateId);
+      if (idx === -1) return;
+      plates[idx] = { ...plates[idx], name, desc, category: catKey, categoryLabel: catEntry.label, price, popular: editorPopular, available: editorAvail };
+    } else {
+      plates.push({
+        id: 'plate_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+        name, desc, category: catKey, categoryLabel: catEntry.label, price, popular: editorPopular, available: editorAvail,
+      });
+    }
+    savePlates(plates);
+    renderPlates(menuRoot, plates, openEditor);
+    if (deleteBtn) deleteBtn.style.display = '';
+    showMenuList();
+    showToast('Saved');
+  }
+
+  function deletePlate() {
+    const idx = plates.findIndex(p => p.id === currentPlateId);
+    if (idx === -1) return;
+    plates.splice(idx, 1);
+    savePlates(plates);
+    renderPlates(menuRoot, plates, openEditor);
+    showMenuList();
+    showToast('Deleted');
+  }
+
+  // Seed or restore plates
+  const saved = loadPlates();
+  if (saved && saved.length > 0) {
+    plates = saved;
+    renderPlates(menuRoot, plates, openEditor);
+  } else {
+    plates = seedFromMarkup(menuRoot);
+    savePlates(plates);
+    renderPlates(menuRoot, plates, openEditor);
+  }
+
+  // Wire editor toggle wrappers
+  if (popularWrap) popularWrap.addEventListener('click', () => setPopularUI(!editorPopular));
+  if (availWrap)   availWrap.addEventListener('click', () => setAvailEditorUI(!editorAvail));
+
+  // Wire editor action buttons
+  if (saveBtn)   saveBtn.addEventListener('click', saveEditor);
+  if (cancelBtn) cancelBtn.addEventListener('click', showMenuList);
+  if (deleteBtn) deleteBtn.addEventListener('click', deletePlate);
+  if (backLink)  backLink.addEventListener('click', showMenuList);
+
+  // Wire "Add new plate" button
+  const addBtn = menuRoot.querySelector('[data-dc-tpl="109"]');
+  if (addBtn) addBtn.addEventListener('click', openAddEditor);
 }
 
 // ── Catering section ───────────────────────────────────────────────────────────

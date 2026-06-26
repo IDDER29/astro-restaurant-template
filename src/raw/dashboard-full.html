@@ -371,7 +371,7 @@
       
 
     </div>
-  </div></div><div data-dash-section="menu" style="display:none;"><div data-dc-tpl="26" style="flex: 1 1 0%; min-width: 0px; display: flex; flex-direction: column;">
+  </div></div><div data-dash-section="menu" style="display:none;"><div data-menu-view="list"><div data-dc-tpl="26" style="flex: 1 1 0%; min-width: 0px; display: flex; flex-direction: column;">
 
     
     <div data-dc-tpl="27" style="position: sticky; top: 0px; z-index: 30; background: rgba(244, 241, 234, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid rgb(231, 223, 208); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
@@ -561,7 +561,116 @@
       
 
     </div>
-  </div></div><div data-dash-section="catering" style="display:none;"><div data-dc-tpl="26" style="flex: 1 1 0%; min-width: 0px; display: flex; flex-direction: column;">
+  </div></div><div data-menu-view="editor" style="display:none;"><div data-dc-tpl="26" style="flex: 1 1 0%; min-width: 0px; display: flex; flex-direction: column;">
+
+    
+    <div data-dc-tpl="27" style="position: sticky; top: 0px; z-index: 30; background: rgba(244, 241, 234, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid rgb(231, 223, 208); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+      <div data-dc-tpl="28" style="flex: 1 1 0%; min-width: 0px;">
+        <div data-dc-tpl="29" style="font-family: &quot;Bricolage Grotesque&quot;, sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap;"><span class="sc-interp">Edit plate</span></div>
+        <div data-dc-tpl="30" style="font-size: 13.5px; color: rgb(107, 99, 88); margin-top: 4px; white-space: nowrap;"><span class="sc-interp">Update photo, price &amp; details</span></div>
+      </div>
+      <div data-dc-tpl="31" style="display: flex; align-items: center; gap: 16px;">
+        <div data-dc-tpl="32" style="display: flex; align-items: center; gap: 10px; background: rgb(255, 255, 255); border: 1px solid rgb(231, 223, 208); padding: 8px 14px; border-radius: 999px;">
+          <span data-dc-tpl="33" style="font-size: 13.5px; font-weight: 700; color: rgb(46, 158, 91);"><span class="sc-interp">Open</span></span>
+          <div data-dc-tpl="34" style="width: 46px; height: 26px; border-radius: 999px; background: rgb(46, 158, 91); position: relative; cursor: pointer; transition: background 0.15s;">
+            <div data-dc-tpl="35" style="position: absolute; top: 2px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 3px; transition: left 0.15s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="36" style="padding: 28px 32px 56px; max-width: 1100px;">
+
+      
+      
+
+      
+      
+
+      
+      
+
+      
+      
+      <div data-dc-tpl="135" style="max-width: 760px;">
+        <div data-dc-tpl="136" style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px; color: rgb(107, 99, 88); margin-bottom: 18px;">← Back to menu</div>
+        <div data-dc-tpl="137" style="display: flex; gap: 24px; flex-wrap: wrap;">
+          
+          <div data-dc-tpl="138" style="width: 260px; flex: 0 0 auto;">
+            <div data-dc-tpl="139" style="font-size: 13px; font-weight: 700; color: rgb(107, 99, 88); margin-bottom: 8px;">Photo</div>
+            <image-slot data-dc-tpl="140" id="mphoto-panini" shape="rounded" radius="18" placeholder="Drag a photo here" style="width: 260px; height: 260px; border: 1px solid rgb(231, 223, 208); border-radius: 18px;"></image-slot>
+            <div data-dc-tpl="141" style="font-size: 12.5px; color: rgb(154, 143, 126); margin-top: 8px; line-height: 1.4;">Drag an image onto the box (or click to browse). This is what customers see on the menu.</div>
+          </div>
+          
+          <div data-dc-tpl="142" style="flex: 1 1 0%; min-width: 280px; display: flex; flex-direction: column; gap: 16px;">
+            <div data-dc-tpl="143">
+              <div data-dc-tpl="144" style="font-size: 13px; font-weight: 700; color: rgb(107, 99, 88); margin-bottom: 6px;">Name</div>
+              <input data-dc-tpl="145" placeholder="e.g. Chicken Tacos" value="Chicken Panini" style="width: 100%; border: 1px solid rgb(231, 223, 208); border-radius: 11px; padding: 12px 14px; font-size: 16px; font-weight: 600;">
+            </div>
+            <div data-dc-tpl="146">
+              <div data-dc-tpl="147" style="font-size: 13px; font-weight: 700; color: rgb(107, 99, 88); margin-bottom: 6px;">Short description</div>
+              <input data-dc-tpl="148" placeholder="e.g. chicken · fries · cheese sauce" value="grilled chicken · cheese · veg" style="width: 100%; border: 1px solid rgb(231, 223, 208); border-radius: 11px; padding: 12px 14px; font-size: 15px;">
+            </div>
+            <div data-dc-tpl="149" style="display: flex; gap: 12px;">
+              <div data-dc-tpl="150" style="flex: 1 1 0%;">
+                <div data-dc-tpl="151" style="font-size: 13px; font-weight: 700; color: rgb(107, 99, 88); margin-bottom: 6px;">Category</div>
+                <select data-dc-tpl="152" style="width: 100%; border: 1px solid rgb(231, 223, 208); border-radius: 11px; padding: 12px 10px; font-size: 14.5px; background: rgb(255, 255, 255);">
+                  <option data-dc-tpl="153" value="breakfast">Breakfast</option>
+                  <option data-dc-tpl="154" value="sandwiches">Sandwiches</option>
+                  <option data-dc-tpl="155" value="tacos">Tacos</option>
+                  <option data-dc-tpl="156" value="burgers">Burgers</option>
+                  <option data-dc-tpl="157" value="pizza">Pizza</option>
+                  <option data-dc-tpl="158" value="pasta">Pasta</option>
+                  <option data-dc-tpl="159" value="salads">Salads</option>
+                  <option data-dc-tpl="160" value="crepes">Crepes</option>
+                  <option data-dc-tpl="161" value="drinks">Juices</option>
+                </select>
+              </div>
+              <div data-dc-tpl="162" style="width: 130px;">
+                <div data-dc-tpl="163" style="font-size: 13px; font-weight: 700; color: rgb(107, 99, 88); margin-bottom: 6px;">Price (MAD)</div>
+                <input data-dc-tpl="164" inputmode="numeric" placeholder="0" value="32" style="width: 100%; border: 1px solid rgb(231, 223, 208); border-radius: 11px; padding: 12px 14px; font-size: 16px; font-weight: 700;">
+              </div>
+            </div>
+            <div data-dc-tpl="165" style="display: flex; gap: 14px; flex-wrap: wrap;">
+              <div data-dc-tpl="166" style="cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid rgb(231, 223, 208); border-radius: 12px; padding: 11px 14px;">
+                <div data-dc-tpl="167" style="width: 46px; height: 26px; border-radius: 999px; background: rgb(255, 138, 30); position: relative;"><div data-dc-tpl="168" style="position: absolute; top: 2px; left: 20px; width: 22px; height: 22px; border-radius: 50%; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 3px;"></div></div>
+                <span data-dc-tpl="169" style="font-weight: 600; font-size: 14.5px;">★ Popular</span>
+              </div>
+              <div data-dc-tpl="170" style="cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid rgb(231, 223, 208); border-radius: 12px; padding: 11px 14px;">
+                <div data-dc-tpl="171" style="width: 46px; height: 26px; border-radius: 999px; background: rgb(46, 158, 91); position: relative;"><div data-dc-tpl="172" style="position: absolute; top: 2px; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 3px;"></div></div>
+                <span data-dc-tpl="173" style="font-weight: 600; font-size: 14.5px;">Available now</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-dc-tpl="174" style="display: flex; align-items: center; gap: 10px; margin-top: 28px;">
+          <div data-dc-tpl="175" style="cursor: pointer; text-align: center; font-weight: 700; font-size: 15.5px; padding: 14px 28px; border-radius: 13px; background: rgb(24, 20, 16); color: rgb(255, 255, 255);"><span class="sc-interp">Save changes</span></div>
+          <div data-dc-tpl="176" style="cursor: pointer; font-weight: 700; font-size: 15px; padding: 14px 22px; border-radius: 13px; border: 1px solid rgb(231, 223, 208); color: rgb(107, 99, 88);">Cancel</div>
+          
+            <div data-dc-tpl="178" style="margin-left: auto; cursor: pointer; font-weight: 700; font-size: 14.5px; padding: 14px 18px; border-radius: 13px; background: rgb(250, 243, 243); color: rgb(226, 59, 59);">Delete plate</div>
+          
+        </div>
+      </div>
+      
+
+      
+      
+
+      
+      
+
+      
+      
+
+      
+      
+
+      
+      
+
+    </div>
+  </div></div></div><div data-dash-section="catering" style="display:none;"><div data-dc-tpl="26" style="flex: 1 1 0%; min-width: 0px; display: flex; flex-direction: column;">
 
     
     <div data-dc-tpl="27" style="position: sticky; top: 0px; z-index: 30; background: rgba(244, 241, 234, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid rgb(231, 223, 208); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
