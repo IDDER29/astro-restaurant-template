@@ -8,6 +8,10 @@
     "preview": "astro preview",
     "test": "vitest run"
   },
-  "dependencies": { "astro": "^4.15.0" },
-  "devDependencies": { "vitest": "^2.0.0" }
+  "dependencies": {
+    "astro": "^4.15.0"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0"
+  }
 }

@@ -8,11 +8,8 @@ const PER_HEAD = 45; // MAD estimate per person
 const sendLink = Array.from(document.querySelectorAll('a')).find((el) =>
   el.textContent.includes('Send my request on WhatsApp')
 );
-if (!sendLink) {
-  // Not on the catering page – bail silently
-  throw new Error('catering-quote: send link not found');
-}
 
+function init() {
 // The form container is the nearest ancestor that holds the inputs.
 // It's the white card with border-radius: 26px wrapping the form fields.
 const formContainer =
@@ -133,3 +130,7 @@ sendLink.addEventListener('click', (e) => {
 
   window.open(buildContactUrl(PHONE, lines), '_blank');
 });
+}
+
+// Only run on the catering page (where the send link exists).
+if (sendLink) init();
