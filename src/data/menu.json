@@ -1,0 +1,274 @@
+[
+  {
+    "id": "ctacos",
+    "name": "Chicken Tacos",
+    "desc": "chicken · fries · cheese sauce",
+    "price": 35,
+    "category": "tacos",
+    "popular": true
+  },
+  {
+    "id": "mtacos",
+    "name": "Mixed Tacos",
+    "desc": "chicken · kefta · fries",
+    "price": 45,
+    "category": "tacos",
+    "popular": true
+  },
+  {
+    "id": "double",
+    "name": "Double Burger",
+    "desc": "2 beef · double cheese",
+    "price": 55,
+    "category": "burgers",
+    "popular": true
+  },
+  {
+    "id": "classic",
+    "name": "Classic Burger",
+    "desc": "beef · cheddar · veg",
+    "price": 35,
+    "category": "burgers",
+    "popular": false
+  },
+  {
+    "id": "cpizza",
+    "name": "Chicken Pizza",
+    "desc": "chicken · peppers · cheese",
+    "price": 55,
+    "category": "pizza",
+    "popular": true
+  },
+  {
+    "id": "margh",
+    "name": "Margherita",
+    "desc": "tomato · mozzarella · basil",
+    "price": 45,
+    "category": "pizza",
+    "popular": false
+  },
+  {
+    "id": "panini",
+    "name": "Chicken Panini",
+    "desc": "grilled chicken · cheese · veg",
+    "price": 32,
+    "category": "sandwiches",
+    "popular": true
+  },
+  {
+    "id": "kefta",
+    "name": "Kefta Sandwich",
+    "desc": "spiced beef · onion · sauce",
+    "price": 35,
+    "category": "sandwiches",
+    "popular": false
+  },
+  {
+    "id": "caesar",
+    "name": "Caesar Salad",
+    "desc": "chicken · parmesan · croutons",
+    "price": 40,
+    "category": "salads",
+    "popular": true
+  },
+  {
+    "id": "avocado",
+    "name": "Avocado Cocktail",
+    "desc": "avo · banana · honey",
+    "price": 25,
+    "category": "drinks",
+    "popular": true
+  },
+  {
+    "id": "orange",
+    "name": "Orange Press",
+    "desc": "100% fresh orange",
+    "price": 15,
+    "category": "drinks",
+    "popular": false
+  },
+  {
+    "id": "berry",
+    "name": "Berry Blast",
+    "desc": "straw · blueberry · mint",
+    "price": 28,
+    "category": "drinks",
+    "popular": false
+  },
+  {
+    "id": "msemen",
+    "name": "Msemen, Honey & Cheese",
+    "desc": "msemen · honey · cheese",
+    "price": 18,
+    "category": "breakfast",
+    "popular": false
+  },
+  {
+    "id": "bigbreak",
+    "name": "Marmara Breakfast",
+    "desc": "eggs · msemen · jam · coffee",
+    "price": 38,
+    "category": "breakfast",
+    "popular": true
+  },
+  {
+    "id": "omelette",
+    "name": "Cheese Omelette",
+    "desc": "3 eggs · cheese · bread",
+    "price": 28,
+    "category": "breakfast",
+    "popular": false
+  },
+  {
+    "id": "beghrir",
+    "name": "Beghrir & Honey",
+    "desc": "moroccan pancakes · honey",
+    "price": 16,
+    "category": "breakfast",
+    "popular": false
+  },
+  {
+    "id": "tunasand",
+    "name": "Tuna Sandwich",
+    "desc": "tuna · egg · fresh veg",
+    "price": 28,
+    "category": "sandwiches",
+    "popular": false
+  },
+  {
+    "id": "mixpanini",
+    "name": "Mixed Panini",
+    "desc": "chicken · turkey · cheese",
+    "price": 38,
+    "category": "sandwiches",
+    "popular": false
+  },
+  {
+    "id": "ktacos",
+    "name": "Kefta Tacos",
+    "desc": "kefta · fries · sauce",
+    "price": 40,
+    "category": "tacos",
+    "popular": false
+  },
+  {
+    "id": "vtacos",
+    "name": "Veggie Tacos",
+    "desc": "grilled veg · cheese",
+    "price": 30,
+    "category": "tacos",
+    "popular": false
+  },
+  {
+    "id": "cburger",
+    "name": "Chicken Burger",
+    "desc": "crispy chicken · sauce",
+    "price": 38,
+    "category": "burgers",
+    "popular": false
+  },
+  {
+    "id": "special",
+    "name": "Marmara Special",
+    "desc": "beef · egg · cheese · onion",
+    "price": 50,
+    "category": "burgers",
+    "popular": false
+  },
+  {
+    "id": "tpizza",
+    "name": "Tuna Pizza",
+    "desc": "tuna · onion · olives",
+    "price": 55,
+    "category": "pizza",
+    "popular": false
+  },
+  {
+    "id": "spizza",
+    "name": "Marmara Special Pizza",
+    "desc": "mixed toppings · extra cheese",
+    "price": 65,
+    "category": "pizza",
+    "popular": false
+  },
+  {
+    "id": "alfredo",
+    "name": "Pasta Alfredo",
+    "desc": "cream · chicken · mushroom",
+    "price": 48,
+    "category": "pasta",
+    "popular": false
+  },
+  {
+    "id": "bolo",
+    "name": "Bolognese",
+    "desc": "beef · tomato · herbs",
+    "price": 45,
+    "category": "pasta",
+    "popular": false
+  },
+  {
+    "id": "pesto",
+    "name": "Pasta Pesto",
+    "desc": "basil · parmesan",
+    "price": 45,
+    "category": "pasta",
+    "popular": false
+  },
+  {
+    "id": "tunasal",
+    "name": "Tuna Salad",
+    "desc": "tuna · egg · mixed greens",
+    "price": 35,
+    "category": "salads",
+    "popular": false
+  },
+  {
+    "id": "vsalad",
+    "name": "Veggie Salad",
+    "desc": "fresh seasonal veg",
+    "price": 28,
+    "category": "salads",
+    "popular": false
+  },
+  {
+    "id": "nutella",
+    "name": "Nutella Crepe",
+    "desc": "nutella · sugar",
+    "price": 22,
+    "category": "crepes",
+    "popular": false
+  },
+  {
+    "id": "bannut",
+    "name": "Banana Nutella Crepe",
+    "desc": "banana · nutella",
+    "price": 28,
+    "category": "crepes",
+    "popular": true
+  },
+  {
+    "id": "honeyc",
+    "name": "Honey & Almond Crepe",
+    "desc": "honey · toasted almond",
+    "price": 24,
+    "category": "crepes",
+    "popular": false
+  },
+  {
+    "id": "fruitc",
+    "name": "Mixed Fruit Crepe",
+    "desc": "seasonal fruit · nutella",
+    "price": 30,
+    "category": "crepes",
+    "popular": false
+  },
+  {
+    "id": "lemonmint",
+    "name": "Lemon & Mint",
+    "desc": "lemon · mint · ice",
+    "price": 15,
+    "category": "drinks",
+    "popular": false
+  }
+]
