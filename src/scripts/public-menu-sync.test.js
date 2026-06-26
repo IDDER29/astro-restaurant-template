@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildNameMap } from './public-menu-sync.js';
+import { buildNameMap, filterNewPlates } from './public-menu-sync.js';
 
 const makePlate = (overrides) => ({
   id: 'plate_test',
@@ -46,5 +46,57 @@ describe('buildNameMap', () => {
     const map = buildNameMap([null, { name: 42 }, good]);
     expect(map.get('good plate')).toBe(good);
     expect(map.size).toBe(1);
+  });
+});
+
+describe('filterNewPlates', () => {
+  it('returns plates whose names are not in bakedNameSet', () => {
+    const plates = [
+      makePlate({ name: 'Chicken Tacos', id: 'ctacos' }),
+      makePlate({ name: 'Test Tajine', id: 'plate_test_1' }),
+    ];
+    const baked = new Set(['chicken tacos']);
+    const result = filterNewPlates(plates, baked);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Test Tajine');
+  });
+
+  it('returns empty array when all plates are in baked set', () => {
+    const plates = [makePlate({ name: 'Chicken Tacos', id: 'ctacos' })];
+    const baked = new Set(['chicken tacos']);
+    expect(filterNewPlates(plates, baked)).toHaveLength(0);
+  });
+
+  it('returns all plates when baked set is empty', () => {
+    const plates = [
+      makePlate({ name: 'Foo', id: 'plate_1' }),
+      makePlate({ name: 'Bar', id: 'plate_2' }),
+    ];
+    expect(filterNewPlates(plates, new Set())).toHaveLength(2);
+  });
+
+  it('handles null and invalid entries without throwing', () => {
+    const good = makePlate({ name: 'Good Plate', id: 'plate_good' });
+    const result = filterNewPlates([null, { name: 42 }, good], new Set());
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Good Plate');
+  });
+
+  it('does case-insensitive comparison', () => {
+    const plates = [makePlate({ name: 'CHICKEN TACOS', id: 'ctacos' })];
+    const baked = new Set(['chicken tacos']);
+    expect(filterNewPlates(plates, baked)).toHaveLength(0);
+  });
+
+  it('trims whitespace before comparing', () => {
+    const plates = [makePlate({ name: '  Chicken Tacos  ', id: 'ctacos' })];
+    const baked = new Set(['chicken tacos']);
+    expect(filterNewPlates(plates, baked)).toHaveLength(0);
+  });
+
+  it('returns empty array for non-array input', () => {
+    expect(filterNewPlates(null, new Set())).toHaveLength(0);
+    expect(filterNewPlates(undefined, new Set())).toHaveLength(0);
+    expect(filterNewPlates('not an array', new Set())).toHaveLength(0);
   });
 });

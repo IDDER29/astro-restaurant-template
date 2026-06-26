@@ -122,26 +122,84 @@ if (imageSlots.length === 0) {
     }
   }
 
-  // ─── wire + buttons ─────────────────────────────────────────────────────
-  for (const [card, data] of cardMap) {
+  // ─── also discover owner-added cards injected by public-menu-sync.js ────
+  // These have data-mm-new="1" and their image-slot id is NOT in menu.json.
+  for (const slot of imageSlots) {
+    const itemId = slot.id.slice('mphoto-'.length);
+    if (menuById[itemId]) continue; // already handled above
+    const card = slot.parentElement?.parentElement;
+    if (!card || cardMap.has(card)) continue;
+    if (card.dataset.mmNew !== '1') continue; // only owner-added cards
+
+    const catKey = card.dataset.mmCategory || '';
+    // Read name and price from the card DOM (same layout as baked cards)
     const addBtn = card.querySelector('.scp0');
-    if (!addBtn) continue;
-    addBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const existing = cart.find((i) => i.id === data.id);
-      if (existing) {
-        cart = cart.map((i) =>
-          i.id === data.id ? { ...i, qty: i.qty + 1 } : i
-        );
-      } else {
-        cart = [
-          ...cart,
-          { id: data.id, name: data.name, price: data.price, qty: 1 },
-        ];
-      }
-      renderCart();
-    });
+    const priceRow = addBtn?.parentElement;
+    const priceDiv = priceRow?.children[0];
+    const priceSpan = priceDiv?.querySelector('.sc-interp');
+    const contentDiv = priceRow?.parentElement;
+    const nameSpan = contentDiv?.children[0]?.querySelector('.sc-interp');
+
+    const name = nameSpan?.textContent?.trim() || '';
+    const priceText = priceSpan?.textContent?.trim() || '0 MAD';
+    const price = parseInt(priceText) || 0;
+
+    if (!name) continue;
+    cardMap.set(card, { id: itemId, category: catKey, name, price });
   }
+
+  // ─── wire + buttons via event delegation ─────────────────────────────────
+  // Event delegation handles both baked cards (pre-discovered) and owner-added
+  // cards injected by public-menu-sync.js after this module has loaded.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.scp0');
+    if (!btn) return;
+    // Respect sold-out / aria-disabled state
+    if (btn.getAttribute('aria-disabled') === 'true') return;
+
+    // Walk up: btn → priceRow → contentDiv → card
+    const card = btn.parentElement?.parentElement?.parentElement;
+    if (!card) return;
+
+    // Look up card data from the map built above (covers baked + pre-discovered new cards)
+    let data = cardMap.get(card);
+
+    // Fallback: dynamically-injected card not yet in cardMap
+    if (!data && card.dataset.mmNew === '1') {
+      const catKey = card.dataset.mmCategory || '';
+      const priceRow = btn.parentElement;
+      const priceDiv = priceRow?.children[0];
+      const priceSpan = priceDiv?.querySelector('.sc-interp');
+      const contentDiv = priceRow?.parentElement;
+      const nameSpan = contentDiv?.children[0]?.querySelector('.sc-interp');
+      const slot = card.querySelector('image-slot[id^="mphoto-"]');
+
+      const name = nameSpan?.textContent?.trim() || '';
+      const priceText = priceSpan?.textContent?.trim() || '0 MAD';
+      const price = parseInt(priceText) || 0;
+      const itemId = slot?.id?.slice('mphoto-'.length) || '';
+
+      if (!name) return;
+      data = { id: itemId, category: catKey, name, price };
+      cardMap.set(card, data); // cache so tab filtering picks it up too
+    }
+
+    if (!data) return;
+    e.stopPropagation();
+
+    const existing = cart.find((i) => i.id === data.id);
+    if (existing) {
+      cart = cart.map((i) =>
+        i.id === data.id ? { ...i, qty: i.qty + 1 } : i
+      );
+    } else {
+      cart = [
+        ...cart,
+        { id: data.id, name: data.name, price: data.price, qty: 1 },
+      ];
+    }
+    renderCart();
+  });
 
   // ─── detect layout: single flat grid vs. multiple category sections ──────
   // If cards live in more than one parent grid, we have category sections.
