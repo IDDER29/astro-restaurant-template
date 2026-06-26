@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MenuCard from '../components/MenuCard.astro';
+import CartDrawer from '../components/CartDrawer.astro';
+import menu from '../data/menu.json';
+import site from '../data/site.json';
+const byCat = site.categories
+  .map((c) => ({ ...c, items: menu.filter((m) => m.category === c.key) }))
+  .filter((c) => c.items.length);
+---
+<BaseLayout title="Menu — Marmara, Ben Guerir" description="The full Marmara menu — sandwiches, Moroccan tacos, burgers, pizza, pasta, salads, crepes and fresh juice. Priced in MAD, order on WhatsApp.">
+  <section class="container" style="padding:40px 20px">
+    <h1>The full menu</h1>
+    <p>Everything fresh, priced in MAD. Tap + to build your order and send it to WhatsApp in one tap. Pay cash or card on pickup.</p>
+    {byCat.map((c) => (
+      <section style="margin-top:32px">
+        <h2>{c.label}</h2>
+        <div class="grid">{c.items.map((item) => <MenuCard item={item} />)}</div>
+      </section>
+    ))}
+  </section>
+  <CartDrawer />
+  <script>import '../scripts/menu-island.js';</script>
+</BaseLayout>
+<style>.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}</style>
