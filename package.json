@@ -1,0 +1,13 @@
+{
+  "name": "marmara-benguerir",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run"
+  },
+  "dependencies": { "astro": "^4.15.0" },
+  "devDependencies": { "vitest": "^2.0.0" }
+}
