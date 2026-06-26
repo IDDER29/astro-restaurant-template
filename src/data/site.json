@@ -1,0 +1,37 @@
+{
+  "name": "Marmara",
+  "tagline": "Tacos, burgers & fresh juice.",
+  "whatsapp": "212600000000",
+  "phoneDisplay": "+212 6 00 00 00 00",
+  "instagram": "marmara.fruits",
+  "address": "123 Avenue Hassan II, Ben Guerir 43150, Morocco",
+  "mapsQuery": "Marmara Restaurant Ben Guerir",
+  "hours": { "open": "9:00 AM", "close": "1:00 AM", "note": "Every day" },
+  "categories": [
+    { "key": "breakfast", "label": "Breakfast" },
+    { "key": "sandwiches", "label": "Sandwiches & Paninis" },
+    { "key": "tacos", "label": "Moroccan Tacos" },
+    { "key": "burgers", "label": "Burgers" },
+    { "key": "pizza", "label": "Pizza" },
+    { "key": "pasta", "label": "Pasta" },
+    { "key": "salads", "label": "Salads" },
+    { "key": "crepes", "label": "Crepes" },
+    { "key": "drinks", "label": "Juices & Drinks" }
+  ],
+  "stats": [
+    { "value": "30+", "label": "menu items" },
+    { "value": "1 AM", "label": "open every day" },
+    { "value": "2 min", "label": "from UM6P campus" },
+    { "value": "4.9", "label": "local rating" }
+  ],
+  "hero": {
+    "badge": "Ben Guerir · Open until 1:00 AM",
+    "headline": "Tacos, burgers & fresh juice.",
+    "sub": "Sandwiches, Moroccan tacos, burgers, pizza, breakfast & cold-pressed juice — made fresh to order. Dine in, takeaway or delivery, two minutes from UM6P. Open till 1 AM."
+  },
+  "about": {
+    "story": "Marmara started with one idea: that great food in Ben Guerir should be easy to grab — whether it's breakfast before class or a burger long after midnight. Sandwiches, tacos, burgers, pizza, fresh salads and cold-pressed juice, all made to order. Dine in, take away, or have it delivered.",
+    "beliefHeading": "Walking past at night, you should want to come in.",
+    "beliefBody": "Warm, bright, alive — the smell of fresh food and the glow of the counter. That feeling is what we want the whole experience to be. Whether you find us on the street or on your phone, ordering should feel just as quick and just as inviting. The food is the product. The ease of getting it is the promise."
+  }
+}

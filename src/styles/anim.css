@@ -1,0 +1,4 @@
+@keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes mar-pulse { 0%,100% { transform: scale(1); box-shadow:0 10px 24px rgba(37,211,102,.45); } 50% { transform: scale(1.05); box-shadow:0 14px 30px rgba(37,211,102,.6); } }
+@keyframes mar-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes mar-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }

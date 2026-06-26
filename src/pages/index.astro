@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import body from '../raw/home.html?raw';
+---
+<BaseLayout
+  title="Marmara — Tacos, burgers & fresh juice in Ben Guerir"
+  description="Late-night food in Ben Guerir, 2 minutes from UM6P. Sandwiches, Moroccan tacos, burgers, pizza & fresh juice. Dine in, takeaway or delivery — open till 1 AM."
+>
+  <Fragment set:html={body} />
+  <script>import '../scripts/menu-cart.js';</script>
+  <script>import '../scripts/public-menu-sync.js';</script>
+  <script>import '../scripts/public-content-sync.js';</script>
+</BaseLayout>

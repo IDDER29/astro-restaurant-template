@@ -1,0 +1,8 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import body from '../raw/about.html?raw';
+---
+<BaseLayout title="About — Marmara, Ben Guerir" description="Good food, any hour. The story behind Marmara in Ben Guerir.">
+  <Fragment set:html={body} />
+  <script>import '../scripts/public-content-sync.js';</script>
+</BaseLayout>
