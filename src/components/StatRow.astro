@@ -1,0 +1,12 @@
+---
+import site from '../data/site.json';
+---
+<div class="stats">{site.stats.map((s) => (
+  <div class="stat"><strong>{s.value}</strong><span>{s.label}</span></div>))}</div>
+<style>
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:30px 0}
+  .stat{background:#fff;border-radius:16px;padding:18px;text-align:center}
+  .stat strong{display:block;font-family:var(--font-head);font-size:28px;color:var(--orange)}
+  .stat span{font-size:13px;color:#7a736b}
+  @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
